@@ -1,16 +1,11 @@
-Microsoft (R) Macro Assembler Version 12.00.21005.1	    10/19/16 19:24:36
-%Assignment 4: Calculate time duratio			     Page 1 - 1
+Microsoft (R) Macro Assembler Version 14.00.23918.0	    11/09/16 23:57:03
+#Assignment 6: Bit-wise instruction			     Page 1 - 1
 
 
-				TITLE  Assignment 4: Calculate time duration
-
-				COMMENT !
-				; Name:  Dat Thanh Nguyen
-				; Date:  6:05 PM 10/19/2016
-				Description goes here****
-				!
+				TITLE  Assignment 6: Bit-wise instructions
 						
-
+				; Name: Dat Nguyen	
+				; Date: 3:54 PM 11/9/2016
 
 				INCLUDE Irvine32.inc
 			      C ; Include file for Irvine32.lib             (Irvine32.inc)
@@ -31,60 +26,168 @@ Microsoft (R) Macro Assembler Version 12.00.21005.1	    10/19/16 19:24:36
 			      C .LIST
 			      C 
 
-				; .constant definition
- = 0000003C				MINUTES_PER_HOUR = 60														; Q1a. constant for the number of minutes in an hour
 
  00000000			.data
- 00000000 50 6C 65 61 73		start_time_prompt BYTE "Please enter starting time (hhmm): "				; Q1b. A string for user to enter starting time
-	   65 20 65 6E 74
-	   65 72 20 73 74
-	   61 72 74 69 6E
-	   67 20 74 69 6D
-	   65 20 28 68 68
-	   6D 6D 29 3A 20
- 00000023 50 6C 65 61 73		end_time_prompt   BYTE "Please enter ending time (hhmm):"					; Q1c.
-	   65 20 65 6E 74
-	   65 72 20 65 6E
-	   64 69 6E 67 20
-	   74 69 6D 65 20
-	   28 68 68 6D 6D
-	   29 3A
+ 00000000 45 41 58 20 69	eaxStr BYTE "EAX is 0", 0ah, 0dh, 0
+	   73 20 30 0A 0D
+	   00
+ 0000000B 45 42 58 20 69	divisibleStr BYTE "EBX is divisible by 4", 0ah, 0dh, 0
+	   73 20 64 69 76
+	   69 73 69 62 6C
+	   65 20 62 79 20
+	   34 0A 0D 00
+ 00000023 45 42 58 20 69	notdiv		 BYTE "EBX is not divisible by 4", 0ah, 0dh, 0
+	   73 20 6E 6F 74
+	   20 64 69 76 69
+	   73 69 62 6C 65
+	   20 62 79 20 34
+	   0A 0D 00
+ 0000003F 4E 75 6D 62 65	oneStr BYTE "Number of 1's: ", 0
+	   72 20 6F 66 20
+	   31 27 73 3A 20
+	   00
+ 0000004F 4E 75 6D 62 65	zeroStr BYTE "Number of 0's: ", 0
+	   72 20 6F 66 20
+	   30 27 73 3A 20
+	   00
+ 0000005F			var1 QWORD 0ffffffffffffffeh
+	   0FFFFFFFFFFFFFFE
+ 00000067 0001 FFFE FFFD	arr WORD 1, -2, -3, 4
+	   0004
 
  00000000			.code
-				; ----------Code Segment Starting from here-----
+ 00000000			main PROC
 
- 00000000			main PROC ; Start main routine
+				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+				;;; Question 1. (4pts) Add code after the  mov  instruction below to use 3 different ways
+				;;; to check if EAX is 0 and jump to label Zero if it is.
 
-				; Get user input
- 00000000  BA 00000000 R		mov		edx, OFFSET start_time_prompt									;Q1b. Display prompt for user to enter START time
- 00000005  E8 00000000 E		call	writeString														;     Print start_time_prompt to screen (accessing to edx)
- 0000000A  E8 00000000 E		call	readDec															;     Retrive userinput and store in [EAX]
+ 00000000  B8 FFFFFFFB		mov eax, -5     ; sample value for eax. You should test with other values.
+				;;; FIRST way: don't use CMP and don't modify eax, check for eax == 0 and jump to Zero label, 
+				;;; otherwise continue with second way
 
- 0000000F  BA 00000000			mov     edx,0
-					movzx	ecx, MINUTES_PER_HOUR
-Assignment4.asm(31) : error A2070:invalid instruction operands
- 00000014  F7 F1			div		ecx
+ 00000005  0B C0			or eax, eax
+ 00000007  74 10			jz Zero
 
- 00000016  BA 00000023 R		mov		edx, OFFSET end_time_prompt										;Q1c. Display prompt for user to enter END time
- 0000001B  E8 00000000 E		call	writeString														;     Print end_time_prompt to screen (accessing to edx)
- 00000020  E8 00000000 E		call	readDec															;     Retrive userinput and store in [EAX]
+				;;; SECOND way: don't use CMP, don't modify eax, and don't use the same instructions as above,
+				;;; check for eax == 0 and jump to Zero label, otherwise continue with the third way
 
-					; Calculate duration
-					; Make sure using constant and format data
-					; Display output
+ 00000009  A9 FFFFFFFF			test eax, 0ffffffffh
+ 0000000E  74 09			jz   Zero
 
- 00000025  E8 00000000 E		call crlf
-
-					exit	
- 0000002A  6A 00	   *	    push   +000000000h
- 0000002C  E8 00000000 E   *	    call   ExitProcess
-
- 00000031			main ENDP	; End main routine
-				END main;
+				;;; THIRD way: don't use CMP, don't modify eax, and don't use the same instructions as above,
+				;;; check for eax == 0 and jump to Zero label, otherwise continue with question 2
+				;Alternative solution:
+					;test eax, eax
+					; jz	Zero
+					; jmp Question2
 
 
-Microsoft (R) Macro Assembler Version 12.00.21005.1	    10/19/16 19:24:36
-%Assignment 4: Calculate time duratio			     Symbols 2 - 1
+ 00000010  8B D8			mov ebx, eax
+ 00000012  83 E0 FF			and eax, 0ffffffffh
+ 00000015  74 02			jz Zero
+ 00000017  EB 0F			jmp Question2
+
+
+ 00000019			Zero:
+ 00000019  BA 00000000 R		mov		edx, OFFSET eaxStr
+ 0000001E  E8 00000000 E		call	writeString			; print eax is 0
+ 00000023  E8 00000000 E		call	crlf
+
+
+				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+				;;; Question 2. (3pts) Add 2 lines of code after the mov instruction below to check if ebx is divisible by 4. 
+				;;; Don't use DIV or IDIV in your answer, instead use ONE bit-wise instruction to check,
+				;;; and ONE branching instruction to print / not print that ebx is divisible by 4.
+
+ 00000028			Question2:
+ 00000028  BB 00000009			mov		ebx, 9
+ 0000002D  F7 C3 00000003		test	ebx, 000000003h				;test bit 0 or bit 1 is set (... 0011)
+ 00000033  74 0C			jz		isDivBy4					; jump if either bit 0 or bit 1 is set to 1
+
+ 00000035			NotDivBy4:
+ 00000035  BA 00000023 R		mov		edx, OFFSET notdiv
+ 0000003A  E8 00000000 E		call	WriteString
+ 0000003F  EB 0A			jmp		Done
+
+ 00000041			IsDivBy4:
+ 00000041  BA 0000000B R		mov		edx, OFFSET divisibleStr
+ 00000046  E8 00000000 E		call	writeString	
+ 0000004B			Done:
+
+
+				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+				;;; Question 3. (5pts) Write code to count how many 1's and how many 0's there are in var1.
+				;;; Then use the oneStr and zeroStr text strings (already defined above) to print the result.
+				;;; var1 should remain the SAME value after you've counted the bits.
+
+ 0000004B  66| B8 0008			mov ax, TYPE var1		; Get TYPE of var1 (QWORD)
+ 0000004F  66| BB 0008			mov bx, SIZEOF var1		; Get SIZE of var1
+ 00000053  66| F7 E3			mul bx					; calculate bitlength
+
+				; COPY result back to AX
+ 00000056  C1 E0 10			shl		eax, 16			
+ 00000059  0F AC D0 10			shrd	eax, edx, 16	
+ 0000005D  0F B7 C8			movzx	ecx, ax				; copy bit length into ecx as counter for the following loop
+ 00000060  66| BB 0000			mov		bx , 0				; counter for 1
+ 00000064  BA 00000000			mov		edx , 0				; counter for 0
+ 00000069  A1 0000005F R		mov		eax, DWORD PTR var1
+ 0000006E			BITCOUNT:
+ 0000006E  D1 C0			rol		eax, 1
+ 00000070  72 04			jc		foundOne
+ 00000072				foundZero:
+ 00000072  66| 42				inc	dx
+ 00000074  EB 02				jmp continue
+ 00000076				foundOne:
+ 00000076  66| 43				inc bx
+ 00000078				continue:
+ 00000078  E2 F4				loop BITCOUNT
+
+ 0000007A  8B CA		mov		ecx, edx		; copy result of 0's bits to ecx
+
+				; Display result the numer of 1's bit
+ 0000007C  BA 0000003F R	mov		edx, OFFSET oneStr
+ 00000081  E8 00000000 E	call	writeString
+ 00000086  0F B7 C3		movzx	eax, bx
+ 00000089  E8 00000000 E	call	writeDec
+
+ 0000008E  E8 00000000 E	call crlf
+				; Display result the numer of 0's bit
+ 00000093  BA 0000004F R	mov		edx, OFFSET zeroStr
+ 00000098  E8 00000000 E	call	writeString
+ 0000009D  8B C1		mov		eax, ecx
+ 0000009F  E8 00000000 E	call	writeDec
+
+				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+				;;; Question 4. (3pts) Given an array  arr  as defined in .data, and ebx is initialized below.
+				;;; Using ebx (not the array name), add ONE instruction to reverse the MSB of the last 2 elements of arr.  
+				;;; Reverse means 0 to 1 or 1 to 0.  Your code should work with any value in the last 2 elements,
+				;;; not just the sample values above.
+
+ 000000A4  BB 00000067 R		mov ebx, OFFSET arr
+ 000000A9  66| 81 73 04			XOR WORD PTR [ebx +4], 8000h
+	   8000
+ 000000AF  66| 81 73 06			XOR WORD PTR [ebx +6], 8000h
+	   8000
+
+				exit	
+ 000000B5  6A 00	   *	    push   +000000000h
+ 000000B7  E8 00000000 E   *	    call   ExitProcess
+ 000000BC			main ENDP
+
+				END main
+
+				COMMENT !
+				Sample output for the given data values above:
+					EBX is divisible by 4
+					Number of 0's: 5
+					Number of 1's: 59
+
+				You should definitely test with other data values.
+				I will not test your program with the given values.
+!
+Microsoft (R) Macro Assembler Version 14.00.23918.0	    11/09/16 23:57:03
+#Assignment 6: Bit-wise instruction			     Symbols 2 - 1
 
 
 
@@ -177,8 +280,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 00000043 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000031 Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 0000006F Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 000000BC Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -285,7 +388,16 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000031 Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 000000BC Public STDCALL
+  Zero . . . . . . . . . . . . .	L Near	 00000019 _TEXT	
+  Question2  . . . . . . . . . .	L Near	 00000028 _TEXT	
+  NotDivBy4  . . . . . . . . . .	L Near	 00000035 _TEXT	
+  IsDivBy4 . . . . . . . . . . .	L Near	 00000041 _TEXT	
+  Done . . . . . . . . . . . . .	L Near	 0000004B _TEXT	
+  BITCOUNT . . . . . . . . . . .	L Near	 0000006E _TEXT	
+  foundZero  . . . . . . . . . .	L Near	 00000072 _TEXT	
+  foundOne . . . . . . . . . . .	L Near	 00000076 _TEXT	
+  continue . . . . . . . . . . .	L Near	 00000078 _TEXT	
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -402,7 +514,6 @@ MB_USERICON  . . . . . . . . . .	Number	 00000080h
 MB_YESNOCANCEL . . . . . . . . .	Number	 00000003h   
 MB_YESNO . . . . . . . . . . . .	Number	 00000004h   
 MENU_EVENT . . . . . . . . . . .	Number	 00000008h   
-MINUTES_PER_HOUR . . . . . . . .	Number	 0000003Ch   
 MOUSE_EVENT  . . . . . . . . . .	Number	 00000002h   
 MessageBox . . . . . . . . . . .	Text   	 MessageBoxA
 NULL . . . . . . . . . . . . . .	Number	 00000000h   
@@ -505,11 +616,13 @@ VK_UP  . . . . . . . . . . . . .	Number	 00000026h
 WINDOW_BUFFER_SIZE_EVENT . . . .	Number	 00000004h   
 WriteConsoleOutputCharacter  . .	Text   	 WriteConsoleOutputCharacterA
 WriteConsole . . . . . . . . . .	Text   	 WriteConsoleA
+arr  . . . . . . . . . . . . . .	Word	 00000067 _DATA	
 black  . . . . . . . . . . . . .	Number	 00000000h   
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
-end_time_prompt  . . . . . . . .	Byte	 00000023 _DATA	
+divisibleStr . . . . . . . . . .	Byte	 0000000B _DATA	
+eaxStr . . . . . . . . . . . . .	Byte	 00000000 _DATA	
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
 gray . . . . . . . . . . . . . .	Number	 00000008h   
 green  . . . . . . . . . . . . .	Number	 00000002h   
@@ -520,11 +633,14 @@ lightGreen . . . . . . . . . . .	Number	 0000000Ah
 lightMagenta . . . . . . . . . .	Number	 0000000Dh   
 lightRed . . . . . . . . . . . .	Number	 0000000Ch   
 magenta  . . . . . . . . . . . .	Number	 00000005h   
+notdiv . . . . . . . . . . . . .	Byte	 00000023 _DATA	
+oneStr . . . . . . . . . . . . .	Byte	 0000003F _DATA	
 red  . . . . . . . . . . . . . .	Number	 00000004h   
-start_time_prompt  . . . . . . .	Byte	 00000000 _DATA	
+var1 . . . . . . . . . . . . . .	QWord	 0000005F _DATA	
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
 yellow . . . . . . . . . . . . .	Number	 0000000Eh   
+zeroStr  . . . . . . . . . . . .	Byte	 0000004F _DATA	
 
 	   0 Warnings
-	   1 Errors
+	   0 Errors
