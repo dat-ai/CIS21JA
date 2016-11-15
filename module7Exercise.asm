@@ -20,11 +20,7 @@ main PROC
 
 mov al, 5
 mov bl, 3
-call mul1	; multiply and display to screen
-; a. write the mul1 procedure that accepts 2 input through registers
-;    and returns the product through a register
-; b. call the mul1 procedure, passing in the values in al and bl
-; c. print the product and text explanation (use the productStr above for the text)
+call mul1
 
 
 ;;;;; part 2   parameter passing through the stack: pass by value
@@ -66,7 +62,7 @@ mul1 PROC
 	mov edx, OFFSET productStr
 	call WriteString
 
-	; clear out eax 
+	; clear out first 16-bit of eax 
 	and eax, 0000ffffh
 	call WriteInt
 	ret
@@ -74,21 +70,28 @@ mul1 PROC
 mul1 ENDP
 
 
-
-; mul2 multiplies 2 bytes
-; input: n1, n2
-; output: on stack
+;-----------PROCEDURE FOR PART 2 --------------------
 mul2 PROC	
+;	 mul2 multiplies 2 bytes
+;		input: n1, n2
+;		output: on stack
+;-----------------------------------------------------
+	mov ebp, esp		; save ret address
+
 
 mul2 ENDP
 
 
-; calc runs:
-;      prod = prod * n1 + n2  
-;      n2 = n2 - 1
-; input: n1, n2, prod
-; output: none
+
+;-----------PROCEDURE FOR PART 3 --------------------
 calc PROC
+;	calc runs:
+;      prod = prod * n1 + n2  
+;			n2 = n2 - 1
+;	input: n1, n2, prod
+;	output: none
+;----------------------------------------------------
+
 
 calc ENDP
 
