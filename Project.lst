@@ -1,9 +1,9 @@
-Microsoft (R) Macro Assembler Version 12.00.21005.1	    11/15/16 17:18:53
+Microsoft (R) Macro Assembler Version 12.00.40629.0	    11/16/16 00:54:33
 Module 7 Exercis					     Page 1 - 1
 
 
 				TITLE Module 7 Exercise
-				
+
 				INCLUDE Irvine32.inc
 			      C ; Include file for Irvine32.lib             (Irvine32.inc)
 			      C 
@@ -22,46 +22,100 @@ Microsoft (R) Macro Assembler Version 12.00.21005.1	    11/15/16 17:18:53
 			      C .NOLIST
 			      C .LIST
 			      C 
-				
-				.stack		;;;;; is this needed? No, because Irvine Library already declared stack 4096 by default
-				
+
+				.stack		;;;;; is this needed? 
+				;No, Irvine Library alreay declared stack 4096 by default
+
+
+				;--------------- DISPLAY A MESSSAGE--------------------------
+				;
+				;	Print a message to console
+				;		input:  a string, unsigned integer
+				;		output: messsage on screen : "string + unsigned data"
+				;-------------------------------------------------------------
+				mPrint MACRO buffer, value
+					push	eax							; Save register values
+					push	edx
+					
+					call	crlf						; Print message
+					mov		edx, OFFSET buffer
+					call	writeString
+
+					movzx	eax, value					; Print unsigned value
+					call	writeDec
+
+					pop		edx							; Restore register values
+					pop		eax
+				ENDM
+
+
  00000000			.data
- 00000000 03			n1 BYTE 3
- 00000001 04			n2 BYTE 4
- 00000002 0000			prod WORD ?
-				
- 00000004 70 72 6F 64 75	productStr BYTE "product is ", 0
+ 00000000 03				n1	 BYTE 3
+ 00000001 04				n2	 BYTE 4
+ 00000002 0000				prod WORD ?
+
+ 00000004 70 72 6F 64 75		productStr	BYTE	"product is ", 0
 	   63 74 20 69 73
 	   20 00
- 00000010 6E 32 20 69 73	n2Str BYTE "n2 is ", 0
+ 00000010 6E 32 20 69 73		n2Str		BYTE	"n2 is ", 0
 	   20 00
-				
+
  00000000			.code
  00000000			main PROC
-				
+
 				;;;;; part 1   parameter passing through registers
-				
- 00000000  B0 05		mov al, 5
- 00000002  B3 03		mov bl, 3
- 00000004  E8 00000019		call mul1
-				
-				
+ 00000000  B0 05			mov		al, 5
+ 00000002  B3 03			mov		bl, 3
+ 00000004  E8 00000089			call	mul1
+
 				;;;;; part 2   parameter passing through the stack: pass by value
-				
-				; a. write the mul2 procedure that accepts 2 input through the stack
-				;    and returns the product through the stack
-				; b. call mul2 to do:  prod = n1 * n2
-				; c. define a macro that accepts a string and an unsigned value
-				; d. invoke the macro with the productStr (defined above) to print on a separate line: product is ---
-				
- 00000009  83 EC 04				sub esp, 4			; return value of following procedure goes to here
- 0000000C  68 00000000 R			push OFFSET n1
- 00000011  68 00000001 R			push OFFSET n2
- 00000016  E8 0000001E				call mul2
-				
-				
-				
+ 00000009  83 EC 04			sub		esp, 4					; Save stack space for result
+ 0000000C  0F B6 05			movzx	eax, n1					; Pass value of N1 to stack frame
+	   00000000 R
+ 00000013  50				push	eax
+ 00000014  0F B6 05			movzx	eax, n2					; Pass value of N2 to stack frame
+	   00000001 R
+ 0000001B  50				push	eax						
+ 0000001C  E8 00000088			call	mul2					; call Procedures mul2
+ 00000021  8B 04 24			mov eax, [esp]
+					mPrint	productStr, BYTE PTR [eax]
+ 00000024  50		     1		push	eax							; Save register values
+ 00000025  52		     1		push	edx
+ 00000026  E8 00000000 E     1		call	crlf						; Print message
+ 0000002B  BA 00000004 R     1		mov		edx, OFFSET productStr
+ 00000030  E8 00000000 E     1		call	writeString
+ 00000035  0F B6 00	     1		movzx	eax, BYTE PTR [eax]					; Print unsigned value
+ 00000038  E8 00000000 E     1		call	writeDec
+ 0000003D  5A		     1		pop		edx							; Restore register values
+ 0000003E  58		     1		pop		eax
+
 				;;;;; part 3   parameter passing through the stack: pass by address or by reference
+					; result from mul2 is pointed by ESP now. Please take a look at my stack frame visualization on procedure 3 documentation
+ 0000003F  68 00000000 R		push OFFSET n1
+ 00000044  68 00000001 R		push OFFSET n2
+ 00000049  E8 00000071			call calc
+ 0000004E  8B 04 24			mov eax, [esp]
+					mPrint	productStr, BYTE PTR [eax]
+ 00000051  50		     1		push	eax							; Save register values
+ 00000052  52		     1		push	edx
+ 00000053  E8 00000000 E     1		call	crlf						; Print message
+ 00000058  BA 00000004 R     1		mov		edx, OFFSET productStr
+ 0000005D  E8 00000000 E     1		call	writeString
+ 00000062  0F B6 00	     1		movzx	eax, BYTE PTR [eax]					; Print unsigned value
+ 00000065  E8 00000000 E     1		call	writeDec
+ 0000006A  5A		     1		pop		edx							; Restore register values
+ 0000006B  58		     1		pop		eax
+					mPrint	n2Str, n2
+ 0000006C  50		     1		push	eax							; Save register values
+ 0000006D  52		     1		push	edx
+ 0000006E  E8 00000000 E     1		call	crlf						; Print message
+ 00000073  BA 00000010 R     1		mov		edx, OFFSET n2Str
+ 00000078  E8 00000000 E     1		call	writeString
+ 0000007D  0F B6 05	     1		movzx	eax, n2					; Print unsigned value
+	   00000001 R
+ 00000084  E8 00000000 E     1		call	writeDec
+ 00000089  5A		     1		pop		edx							; Restore register values
+ 0000008A  58		     1		pop		eax
 				; a. write the calc procedure to do the following 2 tasks 
 				;      prod = prod * n1 + n2  
 				;      n2 = n2 - 1
@@ -71,86 +125,134 @@ Microsoft (R) Macro Assembler Version 12.00.21005.1	    11/15/16 17:18:53
 				; c. invoke the same macro twice and use the strings defined above to print:
 				;       product is ---
 				;       n2 is ---
-				
-				
 				exit
- 0000001B  6A 00	   *	    push   +000000000h
- 0000001D  E8 00000000 E   *	    call   ExitProcess
- 00000022			main ENDP
-				
-				
+ 0000008B  6A 00	   *	    push   +000000000h
+ 0000008D  E8 00000000 E   *	    call   ExitProcess
+ 00000092			main ENDP
+
+
 				;-----------PROCEDURE FOR PART 1 --------------------
- 00000022			mul1 PROC
+ 00000092			mul1 PROC
 				;	Multiply data from two registers
 				;
 				;	Input:  al and bl registers
 				;	Output: display product on screen and 
 				;			result stored in ax
 				;-----------------------------------------------------
- 00000022  F6 E3			mul bl
- 00000024  BA 00000004 R		mov edx, OFFSET productStr
- 00000029  E8 00000000 E		call WriteString
-				
+ 00000092  F6 E3			mul		bl
+ 00000094  BA 00000004 R		mov		edx, OFFSET productStr
+ 00000099  E8 00000000 E		call	WriteString
+
 					; clear out first 16-bit of eax 
- 0000002E  25 0000FFFF			and eax, 0000ffffh
- 00000033  E8 00000000 E		call WriteInt
- 00000038  C3				ret
-				
- 00000039			mul1 ENDP
-				
-				
+ 0000009E  25 0000FFFF			and		eax, 0000ffffh
+ 000000A3  E8 00000000 E		call	WriteInt
+
+ 000000A8  C3				ret
+
+ 000000A9			mul1 ENDP
+
+
 				;-----------PROCEDURE FOR PART 2 --------------------
- 00000039			mul2 PROC	
+ 000000A9			mul2 PROC	
 				;	 mul2 multiplies 2 bytes
 				;		input: n1, n2
 				;		output: on stack
 				;-----------------------------------------------------
- 00000039  55				push	ebp									; save current EBP value
- 0000003A  8B EC			mov		ebp, esp							; set EBP as the base of stack frame
-																; Input variables : [ebp + n ]
-																; Local variables : [ebp - n ]
-				
- 0000003C  50				push	eax									; Save EAX value for restoring later
- 0000003D  52				push	edx									; Save EDX value since edx will be affected
-																; from the multiplication
-				
- 0000003E  8B 45 0C			mov		eax, [ebp + 12]						; copy N1 (input var) to EAX
-					mul		[ebp + 8]							; multiply N2 (input var) to EAX
-module7Exercise.asm(92) : error A2023:instruction operand must have size
- 00000041  89 45 10			mov		[ebp + 16], eax						; copy the multiplacation result to 
-																; [EBP + 16], created in line 32
-				
-																; clear out stack frame using STDCALL
-																; 3 steps:				
- 00000044  5A				pop		edx									; 1. Restore Saved Register Values.
- 00000045  58				pop		eax
-																; 2. Pop all local variables off the stack
- 00000046  5D				pop		ebp									; 3. call RET num ( num is used to clear input parameters by [ESP + num])
- 00000047  C2 0008			ret		8							
-				
- 0000004A			mul2 ENDP
-				
-				
-				
+ 000000A9  55				push	ebp
+ 000000AA  8B EC			mov		ebp, esp						; save ret address
+ 000000AC  50				push	eax								; save registers' values for restoring
+ 000000AD  53				push	ebx
+
+															; Before calculation: STACK FRAME in Memory
+															;---------------------
+															; space for result   		-----[ebp + 16]
+															; n1 : 3					-----[ebp + 12]
+															; n2 : 4					-----[ebp + 8]
+															; RET address				-----[ebp + 4]
+															; ebp						-----[ebp]
+															; addr eax					-----[ebp -4]
+															; addr ebx					-----[ebp - 8] <------- ESP points here
+															
+											
+ 000000AE  8B 45 0C			mov eax, [ebp + 12]						; copy N1 by de-referecing address [ebp+12] to EAX
+ 000000B1  8B 5D 08			mov ebx, [ebp + 8]						; copy N2 to EBX
+ 000000B4  F7 E3			mul ebx									; multiply EBX*EAX
+ 000000B6  89 45 10			mov	[ebp + 16], eax						; saved result to 
+
+															; clear stackframe using stdcall
+ 000000B9  5B				pop	ebx									; 1. Restore all register's values
+ 000000BA  58				pop eax
+															; 2. Pop off all local variables from stack, if neccessary. [esp + SIZEOF(Variables)]
+ 000000BB  5D				pop ebp
+ 000000BC  C2 0008			ret 8									; 3. call RET num to clear input parameters
+															
+															; After calculation: STACK FRAME in Memory
+															;---------------------
+															; result(12)				-----   <------- ESP points here
+															; n1 : 3					-----
+															; n2 : 4					-----
+															; RET address				-----
+ 000000BF			mul2 ENDP
+
+
+
 				;-----------PROCEDURE FOR PART 3 --------------------
- 0000004A			calc PROC
+ 000000BF			calc PROC
 				;	calc runs:
 				;      prod = prod * n1 + n2  
 				;			n2 = n2 - 1
 				;	input: n1, n2, prod
 				;	output: none
 				;----------------------------------------------------
-				
-				
- 0000004A			calc ENDP
-				
-				
-				END main
+ 000000BF  55				push	ebp
+ 000000C0  8B EC			mov		ebp, esp
+ 000000C2  50				push	eax
+ 000000C3  53				push	ebx
+ 000000C4  52				push	edx
+															; Before calculation: STACK FRAME in Memory
+															;---------------------
+															; result from mul2(12)		-----[ebp + 16]
+															; address of n1				-----[ebp + 12]
+															; address of n2 			-----[ebp + 8]
+															; RET address				-----[ebp + 4]
+															; ebp						-----[ebp]
+															; addr eax					-----[ebp -4]
+															; addr ebx					-----[ebp - 8] <------- ESP points here
+															
 
-Microsoft (R) Macro Assembler Version 12.00.21005.1	    11/15/16 17:18:53
+ 000000C5  8B 45 10			mov		eax, [ebp + 16]					; Save the result value of mul2 to EAX (this case is 12)
+ 000000C8  8B 55 0C			mov		edx, [ebp + 12]					; Save the address of n1 to edx
+ 000000CB  0F B6 1A			movzx	ebx, BYTE PTR [edx]				; Deferencing the BYTE data of n1
+ 000000CE  F7 E3			mul		ebx								; EBX*EAX
+
+ 000000D0  8B 55 08			mov		edx, [ebp + 8]
+ 000000D3  0F B6 1A			movzx	ebx, BYTE PTR [edx]
+ 000000D6  03 C3			add		eax, ebx
+ 000000D8  89 45 10			mov		[ebp + 16], eax					; Save the prod
+						
+ 000000DB  80 2A 01			sub		BYTE PTR [edx], 1				; Subtract N2 by 1 
+ 000000DE  5A				pop		edx
+ 000000DF  5B				pop		ebx
+ 000000E0  58				pop		eax
+ 000000E1  5D				pop		ebp
+
+ 000000E2  C2 0008			ret 8
+
+ 000000E5			calc ENDP
+
+
+				END main
+Microsoft (R) Macro Assembler Version 12.00.40629.0	    11/16/16 00:54:33
 Module 7 Exercis					     Symbols 2 - 1
 
 
+
+
+Macros:
+
+                N a m e                 Type
+
+mPrint . . . . . . . . . . . . .	Proc
 
 
 Structures and Unions:
@@ -242,7 +344,7 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
 _DATA  . . . . . . . . . . . . .	32 Bit	 00000017 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 0000004A Para	  Public  'CODE'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 000000E5 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -349,10 +451,10 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-calc . . . . . . . . . . . . . .	P Near	 0000004A _TEXT	Length= 00000000 Public STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000022 Public STDCALL
-mul1 . . . . . . . . . . . . . .	P Near	 00000022 _TEXT	Length= 00000017 Public STDCALL
-mul2 . . . . . . . . . . . . . .	P Near	 00000039 _TEXT	Length= 00000011 Public STDCALL
+calc . . . . . . . . . . . . . .	P Near	 000000BF _TEXT	Length= 00000026 Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000092 Public STDCALL
+mul1 . . . . . . . . . . . . . .	P Near	 00000092 _TEXT	Length= 00000017 Public STDCALL
+mul2 . . . . . . . . . . . . . .	P Near	 000000A9 _TEXT	Length= 00000016 Public STDCALL
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -596,4 +698,4 @@ wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
 yellow . . . . . . . . . . . . .	Number	 0000000Eh   
 
 	   0 Warnings
-	   1 Errors
+	   0 Errors
