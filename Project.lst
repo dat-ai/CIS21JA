@@ -1,12 +1,9 @@
-Microsoft (R) Macro Assembler Version 14.00.23918.0	    11/09/16 23:57:03
-#Assignment 6: Bit-wise instruction			     Page 1 - 1
+Microsoft (R) Macro Assembler Version 12.00.21005.1	    11/15/16 17:18:53
+Module 7 Exercis					     Page 1 - 1
 
 
-				TITLE  Assignment 6: Bit-wise instructions
-						
-				; Name: Dat Nguyen	
-				; Date: 3:54 PM 11/9/2016
-
+				TITLE Module 7 Exercise
+				
 				INCLUDE Irvine32.inc
 			      C ; Include file for Irvine32.lib             (Irvine32.inc)
 			      C 
@@ -25,169 +22,133 @@ Microsoft (R) Macro Assembler Version 14.00.23918.0	    11/09/16 23:57:03
 			      C .NOLIST
 			      C .LIST
 			      C 
-
-
+				
+				.stack		;;;;; is this needed? No, because Irvine Library already declared stack 4096 by default
+				
  00000000			.data
- 00000000 45 41 58 20 69	eaxStr BYTE "EAX is 0", 0ah, 0dh, 0
-	   73 20 30 0A 0D
-	   00
- 0000000B 45 42 58 20 69	divisibleStr BYTE "EBX is divisible by 4", 0ah, 0dh, 0
-	   73 20 64 69 76
-	   69 73 69 62 6C
-	   65 20 62 79 20
-	   34 0A 0D 00
- 00000023 45 42 58 20 69	notdiv		 BYTE "EBX is not divisible by 4", 0ah, 0dh, 0
-	   73 20 6E 6F 74
-	   20 64 69 76 69
-	   73 69 62 6C 65
-	   20 62 79 20 34
-	   0A 0D 00
- 0000003F 4E 75 6D 62 65	oneStr BYTE "Number of 1's: ", 0
-	   72 20 6F 66 20
-	   31 27 73 3A 20
-	   00
- 0000004F 4E 75 6D 62 65	zeroStr BYTE "Number of 0's: ", 0
-	   72 20 6F 66 20
-	   30 27 73 3A 20
-	   00
- 0000005F			var1 QWORD 0ffffffffffffffeh
-	   0FFFFFFFFFFFFFFE
- 00000067 0001 FFFE FFFD	arr WORD 1, -2, -3, 4
-	   0004
-
+ 00000000 03			n1 BYTE 3
+ 00000001 04			n2 BYTE 4
+ 00000002 0000			prod WORD ?
+				
+ 00000004 70 72 6F 64 75	productStr BYTE "product is ", 0
+	   63 74 20 69 73
+	   20 00
+ 00000010 6E 32 20 69 73	n2Str BYTE "n2 is ", 0
+	   20 00
+				
  00000000			.code
  00000000			main PROC
-
-				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-				;;; Question 1. (4pts) Add code after the  mov  instruction below to use 3 different ways
-				;;; to check if EAX is 0 and jump to label Zero if it is.
-
- 00000000  B8 FFFFFFFB		mov eax, -5     ; sample value for eax. You should test with other values.
-				;;; FIRST way: don't use CMP and don't modify eax, check for eax == 0 and jump to Zero label, 
-				;;; otherwise continue with second way
-
- 00000005  0B C0			or eax, eax
- 00000007  74 10			jz Zero
-
-				;;; SECOND way: don't use CMP, don't modify eax, and don't use the same instructions as above,
-				;;; check for eax == 0 and jump to Zero label, otherwise continue with the third way
-
- 00000009  A9 FFFFFFFF			test eax, 0ffffffffh
- 0000000E  74 09			jz   Zero
-
-				;;; THIRD way: don't use CMP, don't modify eax, and don't use the same instructions as above,
-				;;; check for eax == 0 and jump to Zero label, otherwise continue with question 2
-				;Alternative solution:
-					;test eax, eax
-					; jz	Zero
-					; jmp Question2
-
-
- 00000010  8B D8			mov ebx, eax
- 00000012  83 E0 FF			and eax, 0ffffffffh
- 00000015  74 02			jz Zero
- 00000017  EB 0F			jmp Question2
-
-
- 00000019			Zero:
- 00000019  BA 00000000 R		mov		edx, OFFSET eaxStr
- 0000001E  E8 00000000 E		call	writeString			; print eax is 0
- 00000023  E8 00000000 E		call	crlf
-
-
-				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-				;;; Question 2. (3pts) Add 2 lines of code after the mov instruction below to check if ebx is divisible by 4. 
-				;;; Don't use DIV or IDIV in your answer, instead use ONE bit-wise instruction to check,
-				;;; and ONE branching instruction to print / not print that ebx is divisible by 4.
-
- 00000028			Question2:
- 00000028  BB 00000009			mov		ebx, 9
- 0000002D  F7 C3 00000003		test	ebx, 000000003h				;test bit 0 or bit 1 is set (... 0011)
- 00000033  74 0C			jz		isDivBy4					; jump if either bit 0 or bit 1 is set to 1
-
- 00000035			NotDivBy4:
- 00000035  BA 00000023 R		mov		edx, OFFSET notdiv
- 0000003A  E8 00000000 E		call	WriteString
- 0000003F  EB 0A			jmp		Done
-
- 00000041			IsDivBy4:
- 00000041  BA 0000000B R		mov		edx, OFFSET divisibleStr
- 00000046  E8 00000000 E		call	writeString	
- 0000004B			Done:
-
-
-				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-				;;; Question 3. (5pts) Write code to count how many 1's and how many 0's there are in var1.
-				;;; Then use the oneStr and zeroStr text strings (already defined above) to print the result.
-				;;; var1 should remain the SAME value after you've counted the bits.
-
- 0000004B  66| B8 0008			mov ax, TYPE var1		; Get TYPE of var1 (QWORD)
- 0000004F  66| BB 0008			mov bx, SIZEOF var1		; Get SIZE of var1
- 00000053  66| F7 E3			mul bx					; calculate bitlength
-
-				; COPY result back to AX
- 00000056  C1 E0 10			shl		eax, 16			
- 00000059  0F AC D0 10			shrd	eax, edx, 16	
- 0000005D  0F B7 C8			movzx	ecx, ax				; copy bit length into ecx as counter for the following loop
- 00000060  66| BB 0000			mov		bx , 0				; counter for 1
- 00000064  BA 00000000			mov		edx , 0				; counter for 0
- 00000069  A1 0000005F R		mov		eax, DWORD PTR var1
- 0000006E			BITCOUNT:
- 0000006E  D1 C0			rol		eax, 1
- 00000070  72 04			jc		foundOne
- 00000072				foundZero:
- 00000072  66| 42				inc	dx
- 00000074  EB 02				jmp continue
- 00000076				foundOne:
- 00000076  66| 43				inc bx
- 00000078				continue:
- 00000078  E2 F4				loop BITCOUNT
-
- 0000007A  8B CA		mov		ecx, edx		; copy result of 0's bits to ecx
-
-				; Display result the numer of 1's bit
- 0000007C  BA 0000003F R	mov		edx, OFFSET oneStr
- 00000081  E8 00000000 E	call	writeString
- 00000086  0F B7 C3		movzx	eax, bx
- 00000089  E8 00000000 E	call	writeDec
-
- 0000008E  E8 00000000 E	call crlf
-				; Display result the numer of 0's bit
- 00000093  BA 0000004F R	mov		edx, OFFSET zeroStr
- 00000098  E8 00000000 E	call	writeString
- 0000009D  8B C1		mov		eax, ecx
- 0000009F  E8 00000000 E	call	writeDec
-
-				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-				;;; Question 4. (3pts) Given an array  arr  as defined in .data, and ebx is initialized below.
-				;;; Using ebx (not the array name), add ONE instruction to reverse the MSB of the last 2 elements of arr.  
-				;;; Reverse means 0 to 1 or 1 to 0.  Your code should work with any value in the last 2 elements,
-				;;; not just the sample values above.
-
- 000000A4  BB 00000067 R		mov ebx, OFFSET arr
- 000000A9  66| 81 73 04			XOR WORD PTR [ebx +4], 8000h
-	   8000
- 000000AF  66| 81 73 06			XOR WORD PTR [ebx +6], 8000h
-	   8000
-
-				exit	
- 000000B5  6A 00	   *	    push   +000000000h
- 000000B7  E8 00000000 E   *	    call   ExitProcess
- 000000BC			main ENDP
-
+				
+				;;;;; part 1   parameter passing through registers
+				
+ 00000000  B0 05		mov al, 5
+ 00000002  B3 03		mov bl, 3
+ 00000004  E8 00000019		call mul1
+				
+				
+				;;;;; part 2   parameter passing through the stack: pass by value
+				
+				; a. write the mul2 procedure that accepts 2 input through the stack
+				;    and returns the product through the stack
+				; b. call mul2 to do:  prod = n1 * n2
+				; c. define a macro that accepts a string and an unsigned value
+				; d. invoke the macro with the productStr (defined above) to print on a separate line: product is ---
+				
+ 00000009  83 EC 04				sub esp, 4			; return value of following procedure goes to here
+ 0000000C  68 00000000 R			push OFFSET n1
+ 00000011  68 00000001 R			push OFFSET n2
+ 00000016  E8 0000001E				call mul2
+				
+				
+				
+				;;;;; part 3   parameter passing through the stack: pass by address or by reference
+				; a. write the calc procedure to do the following 2 tasks 
+				;      prod = prod * n1 + n2  
+				;      n2 = n2 - 1
+				;   both prod and n2 will be updated
+				;   calculation should call mul2 to do the multiplication
+				; b. call calc 
+				; c. invoke the same macro twice and use the strings defined above to print:
+				;       product is ---
+				;       n2 is ---
+				
+				
+				exit
+ 0000001B  6A 00	   *	    push   +000000000h
+ 0000001D  E8 00000000 E   *	    call   ExitProcess
+ 00000022			main ENDP
+				
+				
+				;-----------PROCEDURE FOR PART 1 --------------------
+ 00000022			mul1 PROC
+				;	Multiply data from two registers
+				;
+				;	Input:  al and bl registers
+				;	Output: display product on screen and 
+				;			result stored in ax
+				;-----------------------------------------------------
+ 00000022  F6 E3			mul bl
+ 00000024  BA 00000004 R		mov edx, OFFSET productStr
+ 00000029  E8 00000000 E		call WriteString
+				
+					; clear out first 16-bit of eax 
+ 0000002E  25 0000FFFF			and eax, 0000ffffh
+ 00000033  E8 00000000 E		call WriteInt
+ 00000038  C3				ret
+				
+ 00000039			mul1 ENDP
+				
+				
+				;-----------PROCEDURE FOR PART 2 --------------------
+ 00000039			mul2 PROC	
+				;	 mul2 multiplies 2 bytes
+				;		input: n1, n2
+				;		output: on stack
+				;-----------------------------------------------------
+ 00000039  55				push	ebp									; save current EBP value
+ 0000003A  8B EC			mov		ebp, esp							; set EBP as the base of stack frame
+																; Input variables : [ebp + n ]
+																; Local variables : [ebp - n ]
+				
+ 0000003C  50				push	eax									; Save EAX value for restoring later
+ 0000003D  52				push	edx									; Save EDX value since edx will be affected
+																; from the multiplication
+				
+ 0000003E  8B 45 0C			mov		eax, [ebp + 12]						; copy N1 (input var) to EAX
+					mul		[ebp + 8]							; multiply N2 (input var) to EAX
+module7Exercise.asm(92) : error A2023:instruction operand must have size
+ 00000041  89 45 10			mov		[ebp + 16], eax						; copy the multiplacation result to 
+																; [EBP + 16], created in line 32
+				
+																; clear out stack frame using STDCALL
+																; 3 steps:				
+ 00000044  5A				pop		edx									; 1. Restore Saved Register Values.
+ 00000045  58				pop		eax
+																; 2. Pop all local variables off the stack
+ 00000046  5D				pop		ebp									; 3. call RET num ( num is used to clear input parameters by [ESP + num])
+ 00000047  C2 0008			ret		8							
+				
+ 0000004A			mul2 ENDP
+				
+				
+				
+				;-----------PROCEDURE FOR PART 3 --------------------
+ 0000004A			calc PROC
+				;	calc runs:
+				;      prod = prod * n1 + n2  
+				;			n2 = n2 - 1
+				;	input: n1, n2, prod
+				;	output: none
+				;----------------------------------------------------
+				
+				
+ 0000004A			calc ENDP
+				
+				
 				END main
 
-				COMMENT !
-				Sample output for the given data values above:
-					EBX is divisible by 4
-					Number of 0's: 5
-					Number of 1's: 59
-
-				You should definitely test with other data values.
-				I will not test your program with the given values.
-!
-Microsoft (R) Macro Assembler Version 14.00.23918.0	    11/09/16 23:57:03
-#Assignment 6: Bit-wise instruction			     Symbols 2 - 1
+Microsoft (R) Macro Assembler Version 12.00.21005.1	    11/15/16 17:18:53
+Module 7 Exercis					     Symbols 2 - 1
 
 
 
@@ -280,8 +241,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 0000006F Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 000000BC Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 00000017 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 0000004A Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -388,16 +349,10 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 000000BC Public STDCALL
-  Zero . . . . . . . . . . . . .	L Near	 00000019 _TEXT	
-  Question2  . . . . . . . . . .	L Near	 00000028 _TEXT	
-  NotDivBy4  . . . . . . . . . .	L Near	 00000035 _TEXT	
-  IsDivBy4 . . . . . . . . . . .	L Near	 00000041 _TEXT	
-  Done . . . . . . . . . . . . .	L Near	 0000004B _TEXT	
-  BITCOUNT . . . . . . . . . . .	L Near	 0000006E _TEXT	
-  foundZero  . . . . . . . . . .	L Near	 00000072 _TEXT	
-  foundOne . . . . . . . . . . .	L Near	 00000076 _TEXT	
-  continue . . . . . . . . . . .	L Near	 00000078 _TEXT	
+calc . . . . . . . . . . . . . .	P Near	 0000004A _TEXT	Length= 00000000 Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000022 Public STDCALL
+mul1 . . . . . . . . . . . . . .	P Near	 00000022 _TEXT	Length= 00000017 Public STDCALL
+mul2 . . . . . . . . . . . . . .	P Near	 00000039 _TEXT	Length= 00000011 Public STDCALL
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -616,13 +571,10 @@ VK_UP  . . . . . . . . . . . . .	Number	 00000026h
 WINDOW_BUFFER_SIZE_EVENT . . . .	Number	 00000004h   
 WriteConsoleOutputCharacter  . .	Text   	 WriteConsoleOutputCharacterA
 WriteConsole . . . . . . . . . .	Text   	 WriteConsoleA
-arr  . . . . . . . . . . . . . .	Word	 00000067 _DATA	
 black  . . . . . . . . . . . . .	Number	 00000000h   
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
-divisibleStr . . . . . . . . . .	Byte	 0000000B _DATA	
-eaxStr . . . . . . . . . . . . .	Byte	 00000000 _DATA	
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
 gray . . . . . . . . . . . . . .	Number	 00000008h   
 green  . . . . . . . . . . . . .	Number	 00000002h   
@@ -633,14 +585,15 @@ lightGreen . . . . . . . . . . .	Number	 0000000Ah
 lightMagenta . . . . . . . . . .	Number	 0000000Dh   
 lightRed . . . . . . . . . . . .	Number	 0000000Ch   
 magenta  . . . . . . . . . . . .	Number	 00000005h   
-notdiv . . . . . . . . . . . . .	Byte	 00000023 _DATA	
-oneStr . . . . . . . . . . . . .	Byte	 0000003F _DATA	
+n1 . . . . . . . . . . . . . . .	Byte	 00000000 _DATA	
+n2Str  . . . . . . . . . . . . .	Byte	 00000010 _DATA	
+n2 . . . . . . . . . . . . . . .	Byte	 00000001 _DATA	
+productStr . . . . . . . . . . .	Byte	 00000004 _DATA	
+prod . . . . . . . . . . . . . .	Word	 00000002 _DATA	
 red  . . . . . . . . . . . . . .	Number	 00000004h   
-var1 . . . . . . . . . . . . . .	QWord	 0000005F _DATA	
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
 yellow . . . . . . . . . . . . .	Number	 0000000Eh   
-zeroStr  . . . . . . . . . . . .	Byte	 0000004F _DATA	
 
 	   0 Warnings
-	   0 Errors
+	   1 Errors
