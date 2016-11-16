@@ -52,25 +52,20 @@ main PROC
 	push	eax						
 	call	mul2					; call Procedures mul2
 
-	mPrint	productStr,[esp]
+	movzx	ebx, BYTE PTR [esp]
+	mPrint	productStr, bl
 
 ;;;;; part 3   parameter passing through the stack: pass by address or by reference
-	; result from mul2 is pointed by ESP now. Please take a look at my stack frame visualization on procedure 3 documentation
-	push OFFSET n1
-	push OFFSET n2
-	call calc
-	mov eax, [esp]
-	mPrint	productStr, BYTE PTR [eax]
+
+	; result from mul2 is pointed by ESP now. No need to save space for result
+	push	OFFSET n1
+	push	OFFSET n2
+	call	calc
+
+	movzx	ebx, BYTE PTR [esp]
+	mPrint	productStr, bl
 	mPrint	n2Str, n2
-; a. write the calc procedure to do the following 2 tasks 
-;      prod = prod * n1 + n2  
-;      n2 = n2 - 1
-;   both prod and n2 will be updated
-;   calculation should call mul2 to do the multiplication
-; b. call calc 
-; c. invoke the same macro twice and use the strings defined above to print:
-;       product is ---
-;       n2 is ---
+
 exit
 main ENDP
 
@@ -107,17 +102,16 @@ mul2 PROC
 	push	eax								; save registers' values for restoring
 	push	ebx
 
-											; Before calculation: STACK FRAME in Memory
-											;---------------------
-											; space for result   		-----[ebp + 16]
-											; n1 : 3					-----[ebp + 12]
-											; n2 : 4					-----[ebp + 8]
-											; RET address				-----[ebp + 4]
-											; ebp						-----[ebp]
-											; addr eax					-----[ebp -4]
-											; addr ebx					-----[ebp - 8] <------- ESP points here
+																					; Before calculation: STACK FRAME in Memory
+																					;---------------------
+																					; space for result   		-----[ebp + 16]
+																					; n1 : 3					-----[ebp + 12]
+																					; n2 : 4					-----[ebp + 8]
+																					; RET address				-----[ebp + 4]
+																					; ebp						-----[ebp]
+																					; value of eax				-----[ebp - 4]
+																					; value of ebx				-----[ebp - 8] <------- ESP points here
 											
-							
 	mov eax, [ebp + 12]						; copy N1 by de-referecing address [ebp+12] to EAX
 	mov ebx, [ebp + 8]						; copy N2 to EBX
 	mul ebx									; multiply EBX*EAX
@@ -130,16 +124,16 @@ mul2 PROC
 	pop ebp
 	ret 8									; 3. call RET num to clear input parameters
 											
-											; After calculation: STACK FRAME in Memory
-											;---------------------
-											; result(12)				-----   <------- ESP points here
-											; n1 : 3					-----
-											; n2 : 4					-----
-											; RET address				-----
+																					; After calculation: STACK FRAME in Memory
+																					;---------------------
+																					; result(12)				-----   <------- ESP points here
+																					; n1 : 3					-----  cleared
+																					; n2 : 4					-----  cleared
+																					; RET address				-----  cleared
 mul2 ENDP
 
 
-
+;; EXTRA CREDIT DONE ;;
 ;-----------PROCEDURE FOR PART 3 --------------------
 calc PROC
 ;	calc runs:
@@ -150,39 +144,104 @@ calc PROC
 ;----------------------------------------------------
 	push	ebp
 	mov		ebp, esp
+	sub		esp, 4							; local variable
 	push	eax
 	push	ebx
 	push	edx
-											; Before calculation: STACK FRAME in Memory
-											;---------------------
-											; result from mul2(12)		-----[ebp + 16]
-											; address of n1				-----[ebp + 12]
-											; address of n2 			-----[ebp + 8]
-											; RET address				-----[ebp + 4]
-											; ebp						-----[ebp]
-											; addr eax					-----[ebp -4]
-											; addr ebx					-----[ebp - 8] <------- ESP points here
-											
+																					; Before calculation: STACK FRAME in Memory
+																					;---------------------
+																					; PROD from mul2(12)		-----[ebp + 16]
+																					; address of n1				-----[ebp + 12]
+																					; address of n2 			-----[ebp + 8]
+																					; RET address				-----[ebp + 4]
+																					; ebp						-----[ebp]
+																					; local variable			-----[ebp - 4]
+																					; value of eax				-----[ebp - 8]
+																					; value of ebx				-----[ebp - 12]
+																					; value of edx				-----[ebp - 16]  <------- ESP points here
 
-	mov		eax, [ebp + 16]					; Save the result value of mul2 to EAX (this case is 12)
-	mov		edx, [ebp + 12]					; Save the address of n1 to edx
-	movzx	ebx, BYTE PTR [edx]				; Deferencing the BYTE data of n1
-	mul		ebx								; EBX*EAX
+	sub		esp, 4							; save space for result of calculation
+	mov		eax, [ebp + 16]					; Pass value of PROD to stack frame
+	push	eax
 
+	mov		eax, [ebp + 12]					; Pass value of N1 to stack frame
+	movzx	eax, BYTE PTR[eax]
+	push	eax				
+	
+	call	mul2							; call Procedures mul2 ( MULTIPLY PROD*N1) = 12*3
+	mov		eax, [esp]						; save the result to eax
+	mov		[ebp - 4], eax					; copy value of esp to ebp
+
+																					; After calculation mul2: STACK FRAME in Memory
+																					;---------------------
+																					; PROD from mul2(12)		-----[ebp + 16]
+																					; address of n1				-----[ebp + 12]
+																					; address of n2 			-----[ebp + 8]
+																					; RET address				-----[ebp + 4]
+																					; ebp						-----[ebp]
+																					; PROD value[local]			-----[ebp - 4]
+																					; value of eax				-----[ebp - 8]
+																					; value of ebx				-----[ebp - 12]
+																					; value of edx				-----[ebp - 16] 
+																					; space for result of mul2	-----[ebp - 20] <------- ESP points here
+
+	add		esp, 4							; Since I sub esp 4 at line 163,
+											;	 I have to add 4 to get correct ESP address for further calculation
+											; Add N2 to PROD
 	mov		edx, [ebp + 8]
-	movzx	ebx, BYTE PTR [edx]
+	movzx	ebx, BYTE PTR [edx]				; save the value of N1 to ebx
 	add		eax, ebx
 	mov		[ebp + 16], eax					; Save the prod
-		
 	sub		BYTE PTR [edx], 1				; Subtract N2 by 1 
-	pop		edx
-	pop		ebx
-	pop		eax
-	pop		ebp
 
-	ret 8
+											; clear STD process										
+	pop		edx								; 1. Restore register values
+	pop		ebx
+	pop		eax									
+	add		esp, 4							; 2. clear local var by adding 1 BYTE to ESP (since there is only 1 local var)
+	pop		ebp								; 3. clear EBP
+	ret		8
+																					; After calculation calc: STACK FRAME in Memory
+																					;---------------------
+																					; PROD from mul2(40)		-----[ebp + 16]	<-------------- ESP should point here
+																					; address of n1				-----[ebp + 12]	------cleared
+																					; address of n2 			-----[ebp + 8]	------cleared
+																					; RET address				-----[ebp + 4]	------cleared
+																					; ebp						-----[ebp]		------cleared
 
 calc ENDP
 
 
 END main
+
+
+
+; a. write the mul1 procedure that accepts 2 input through registers
+;    and returns the product through a register
+; b. call the mul1 procedure, passing in the values in al and bl
+; c. print the product and text explanation (use the productStr above for the text)
+
+
+
+
+;;;;; part 2   parameter passing through the stack: pass by value
+
+; a. write the mul2 procedure that accepts 2 input through the stack
+;    and returns the product through the stack
+; b. call mul2 to do:  prod = n1 * n2
+; c. define a macro that accepts a string and an unsigned value
+; d. invoke the macro with the productStr (defined above) to print on a separate line: product is ---
+
+
+
+
+;;;;; part 3   parameter passing through the stack: pass by address or by reference
+; a. write the calc procedure to do the following 2 tasks 
+;      prod = prod * n1 + n2  
+;      n2 = n2 - 1
+;   both prod and n2 will be updated
+;   calculation should call mul2 to do the multiplication
+; b. call calc 
+; c. invoke the same macro twice and use the strings defined above to print:
+;       product is ---
+;       n2 is ---
