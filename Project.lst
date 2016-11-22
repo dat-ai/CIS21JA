@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/22/16 00:51:45
+Microsoft (R) Macro Assembler Version 14.00.23918.0	    11/22/16 13:29:58
 Module 7 Exercis					     Page 1 - 1
 
 
@@ -92,32 +92,30 @@ Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/22/16 00:51:45
  00000000			main PROC
 
 				;Step 1 : Get user's input using Stack Frame
- 00000000  8B 15 00000039 R		mov		edx, prompt
- 00000006  52				push	edx	
- 00000007  68 00000000 R		push	OFFSET num1			; address of num1
- 0000000C  68 00000002 R		push	OFFSET num2			; address of num2
- 00000011  E8 00000007			call	getInput
+ 00000000  68 00000039 R		push	OFFSET prompt		; address of prompt
+ 00000005  68 00000000 R		push	OFFSET num1			; address of num1
+ 0000000A  68 00000002 R		push	OFFSET num2			; address of num2
+ 0000000F  E8 00000007			call	getInput
 
 				exit
- 00000016  6A 00	   *	    push   +000000000h
- 00000018  E8 00000000 E   *	    call   ExitProcess
- 0000001D			main ENDP
+ 00000014  6A 00	   *	    push   +000000000h
+ 00000016  E8 00000000 E   *	    call   ExitProcess
+ 0000001B			main ENDP
 
 				;------------GET INPUT PROCEDURE --------------------
- 0000001D			getInput PROC
+ 0000001B			getInput PROC
 				;	Get user input and store into data num1 and num2
 				;		Input: addr(inputstring), addr(num1), addr(num2)
 				;		Ouput: nothing
 				;----------------------------------------------------
- 0000001D  55				push	ebp
- 0000001E  8B EC			mov		ebp, esp
+ 0000001B  55				push	ebp
+ 0000001C  8B EC			mov		ebp, esp
 																; Save register's data
 																;Aternative : pushad
- 00000020  50				push	eax
- 00000021  53				push	ebx
- 00000022  51				push	ecx
- 00000023  52				push	edx
-														
+ 0000001E  50				push	eax
+ 0000001F  53				push	ebx
+ 00000020  51				push	ecx
+ 00000021  52				push	edx
 																; STACK FRAME in Memory
 																;---------------------
 																; address of inputstring	-----[ebp + 16]
@@ -129,31 +127,38 @@ Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/22/16 00:51:45
 																; value of ebx				-----[ebp - 8]
 																; value of ecx				-----[ebp - 12]
 																; value of edx				-----[ebp - 16]  <------- ESP points here
- 00000024  B9 00000000			mov		ecx, 0
-						
- 00000029  BB 00000004				mov		ebx, 04h				; multiplier to iterate array of inputstring
- 0000002E				DISPLAY:
- 0000002E  83 F9 02				cmp		ecx, 2
- 00000031  74 12				je		FINISHED
+ 00000022  B9 00000000			mov		ecx, 0
+ 00000027				DISPLAY:
+ 00000027  83 F9 02				cmp		ecx, 2
+ 0000002A  74 30				je		FINISHED
 
- 00000033  8B 45 10				mov		eax, [ebp+16]
- 00000036  8B 10				mov		edx, [eax]					; display first_prompt and second_prompt, respectively 
-																; by iterate through array of inputstring
+ 0000002C  8B 55 10				mov		edx, [ebp+16]					; save address of inputstring to edx 
+ 0000002F  BB 00000004				mov		ebx, TYPE edx					; multiplier to iterate array of inputstring								
+ 00000034  8B C1				mov		eax, ecx						; iterate through element of array of inputstring
+ 00000036  F6 E3				mul		bl								; by multiplying bl*al
+ 00000038  03 D0				add		edx, eax						; then, add the iteration to edx
 
- 00000038  E8 00000000 E			call	writeString
- 0000003D  E8 00000000 E			call	readHex							; store hex input in AX
+ 0000003A  8B 12				mov		edx, [edx]						; dereference [edx]
+ 0000003C  E8 00000000 E			call	writeString						
+ 00000041  E8 00000000 E			call	readHex							; store hex input in AX
 																; There is no validation here since input is guranteed to be a hex value within 16 bits
- 00000042  41					inc		ecx
- 00000043  EB E9				jmp		DISPLAY
 
- 00000045				FINISHED:
- 00000045  5A					pop		edx
- 00000046  59					pop		ecx
- 00000047  5B					pop		ebx
- 00000048  58					pop		eax
- 00000049  5D					pop		ebp
- 0000004A  C2 000C				ret		12
- 0000004D			getInput ENDP
+ 00000046  8B 55 0C				mov		edx, [ebp+12]					; 
+						movzx	ebx, LENGTHOF [edx]
+Assignment7.asm(113) : error A2081:missing operand after unary operator
+ 00000049  8D 14 4A				lea		edx, [edx+ecx*2]				; 
+ 0000004C  89 02				mov		[edx], eax						; dereference [edx]
+
+ 0000004E  41					inc		ecx
+ 0000004F  EB D6				jmp		DISPLAY
+ 0000005C				FINISHED:
+ 0000005C  5A					pop		edx
+ 0000005D  59					pop		ecx
+ 0000005E  5B					pop		ebx
+ 0000005F  58					pop		eax
+ 00000060  5D					pop		ebp
+ 00000061  C2 000C				ret		12
+ 00000064			getInput ENDP
 
 				COMMENT !
 				2.	Write the getInput procedure.  This procedure:
@@ -163,7 +168,7 @@ Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/22/16 00:51:45
 				!
 
 				END main
-Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/22/16 00:51:45
+Microsoft (R) Macro Assembler Version 14.00.23918.0	    11/22/16 13:29:58
 Module 7 Exercis					     Symbols 2 - 1
 
 
@@ -258,7 +263,7 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
 _DATA  . . . . . . . . . . . . .	32 Bit	 00000041 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 0000004D Para	  Public  'CODE'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000064 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -365,10 +370,10 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-getInput . . . . . . . . . . . .	P Near	 0000001D _TEXT	Length= 00000030 Public STDCALL
-  DISPLAY  . . . . . . . . . . .	L Near	 0000002E _TEXT	
-  FINISHED . . . . . . . . . . .	L Near	 00000045 _TEXT	
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000001D Public STDCALL
+getInput . . . . . . . . . . . .	P Near	 0000001B _TEXT	Length= 00000049 Public STDCALL
+  DISPLAY  . . . . . . . . . . .	L Near	 00000027 _TEXT	
+  FINISHED . . . . . . . . . . .	L Near	 0000005C _TEXT	
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000001B Public STDCALL
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -612,4 +617,4 @@ wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
 yellow . . . . . . . . . . . . .	Number	 0000000Eh   
 
 	   0 Warnings
-	   0 Errors
+	   1 Errors

@@ -60,8 +60,7 @@ INCLUDE Irvine32.inc
 main PROC
 
 ;Step 1 : Get user's input using Stack Frame
-	mov		edx, prompt
-	push	edx	
+	push	OFFSET prompt		; address of prompt
 	push	OFFSET num1			; address of num1
 	push	OFFSET num2			; address of num2
 	call	getInput
@@ -83,7 +82,6 @@ getInput PROC
 	push	ebx
 	push	ecx
 	push	edx
-										
 												; STACK FRAME in Memory
 												;---------------------
 												; address of inputstring	-----[ebp + 16]
@@ -96,25 +94,28 @@ getInput PROC
 												; value of ecx				-----[ebp - 12]
 												; value of edx				-----[ebp - 16]  <------- ESP points here
 	mov		ecx, 0
-		
-		mov		ebx, 04h				; multiplier to iterate array of inputstring
 	DISPLAY:
 		cmp		ecx, 2
 		je		FINISHED
 
-		mov		eax, [ebp+16]
-		mul		bl
-		mov		edx, [ebp+16]					; display first_prompt and second_prompt, respectively 
-												; by iterate through array of inputstring
-		mov		eax, ecx
-		mul		bl
-		add		edx, eax
-		call	writeString
+		mov		edx, [ebp+16]					; save address of inputstring to edx 
+		mov		ebx, TYPE edx					; multiplier to iterate array of inputstring								
+		mov		eax, ecx						; iterate through element of array of inputstring
+		mul		bl								; by multiplying bl*al
+		add		edx, eax						; then, add the iteration to edx
+
+		mov		edx, [edx]						; dereference [edx]
+		call	writeString						
 		call	readHex							; store hex input in AX
 												; There is no validation here since input is guranteed to be a hex value within 16 bits
+
+		mov		edx, [ebp+12]					; 
+		movzx	ebx, LENGTHOF [edx]				; BLABLABLABLA
+		lea		edx, [edx+ecx*2]				; 
+		mov		[edx], eax						; dereference [edx]
+
 		inc		ecx
 		jmp		DISPLAY
-
 	FINISHED:
 		pop		edx
 		pop		ecx
