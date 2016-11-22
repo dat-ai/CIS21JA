@@ -47,17 +47,88 @@ TITLE Module 7 Exercise
 INCLUDE Irvine32.inc
 
 .data
-	num1 WORD 0F123h
-	num2 WORD 0E456h
+
+	num1			WORD	0F123h
+	num2			WORD	0E456h
+
+	first_prompt	BYTE	"Enter a first hex number:",0
+	second_prompt	BYTE	"Enter a second hex number:",0
+	prompt			DWORD    OFFSET first_prompt, OFFSET second_prompt
 
 
 .code
 main PROC
 
+;Step 1 : Get user's input using Stack Frame
+	mov		edx, prompt
+	push	edx	
+	push	OFFSET num1			; address of num1
+	push	OFFSET num2			; address of num2
+	call	getInput
 
 exit
 main ENDP
 
-; PROCEDURES here
+;------------GET INPUT PROCEDURE --------------------
+getInput PROC
+;	Get user input and store into data num1 and num2
+;		Input: addr(inputstring), addr(num1), addr(num2)
+;		Ouput: nothing
+;----------------------------------------------------
+	push	ebp
+	mov		ebp, esp
+												; Save register's data
+												;Aternative : pushad
+	push	eax
+	push	ebx
+	push	ecx
+	push	edx
+										
+												; STACK FRAME in Memory
+												;---------------------
+												; address of inputstring	-----[ebp + 16]
+												; address of n1				-----[ebp + 12]
+												; address of n2 			-----[ebp + 8]
+												; RET address				-----[ebp + 4]
+												; ebp						-----[ebp]
+												; value of eax				-----[ebp - 4]
+												; value of ebx				-----[ebp - 8]
+												; value of ecx				-----[ebp - 12]
+												; value of edx				-----[ebp - 16]  <------- ESP points here
+	mov		ecx, 0
+		
+		mov		ebx, 04h				; multiplier to iterate array of inputstring
+	DISPLAY:
+		cmp		ecx, 2
+		je		FINISHED
+
+		mov		eax, [ebp+16]
+		mul		bl
+		mov		edx, [ebp+16]					; display first_prompt and second_prompt, respectively 
+												; by iterate through array of inputstring
+		mov		eax, ecx
+		mul		bl
+		add		edx, eax
+		call	writeString
+		call	readHex							; store hex input in AX
+												; There is no validation here since input is guranteed to be a hex value within 16 bits
+		inc		ecx
+		jmp		DISPLAY
+
+	FINISHED:
+		pop		edx
+		pop		ecx
+		pop		ebx
+		pop		eax
+		pop		ebp
+		ret		12
+getInput ENDP
+
+COMMENT !
+2.	Write the getInput procedure.  This procedure:
+	a.	Prompts the user and reads in 2 hexadecimal values, and stores them in num1 and num2.
+	b.	Works with 3 parameters on the stack:  address of the input prompt string address, address of num1, address of num2.
+	c.	You don't have to check for invalid input values. The input is guaranteed to be a hex value within 16 bits.
+!
 
 END main
