@@ -98,24 +98,20 @@ getInput PROC
 		cmp		ecx, 2
 		je		FINISHED
 
-		mov		edx, [ebp+16]					; save address of inputstring to edx 
-		mov		ebx, TYPE edx					; multiplier to iterate array of inputstring								
-		mov		eax, ecx						; iterate through element of array of inputstring
-		mul		bl								; by multiplying bl*al
-		add		edx, eax						; then, add the iteration to edx
-
-		mov		edx, [edx]						; dereference [edx]
+		mov		eax, [ebp+16]					; save address of inputstring to edx 
+		lea		eax, [eax + ecx*4]				; dereference [edx]
+		mov		edx, [eax]						
 		call	writeString						
 		call	readHex							; store hex input in AX
 												; There is no validation here since input is guranteed to be a hex value within 16 bits
 
 		mov		edx, [ebp+12]					; 
-		movzx	ebx, LENGTHOF [edx]				; BLABLABLABLA
-		lea		edx, [edx+ecx*2]				; 
-		mov		[edx], eax						; dereference [edx]
+		lea		edx, [edx + ecx*2]				; 
+		mov		WORD PTR [edx], ax				; dereference [edx]
 
 		inc		ecx
 		jmp		DISPLAY
+
 	FINISHED:
 		pop		edx
 		pop		ecx
