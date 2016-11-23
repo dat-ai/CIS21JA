@@ -1,6 +1,335 @@
-Microsoft (R) Macro Assembler Version 14.00.23918.0	    11/22/16 13:29:58
+Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/23/16 00:18:41
 Module 7 Exercis					     Page 1 - 1
 
+
+				TITLE Module 7 Exercise
+
+				INCLUDE Irvine32.inc
+			      C ; Include file for Irvine32.lib             (Irvine32.inc)
+			      C 
+			      C ;OPTION CASEMAP:NONE		; optional: make identifiers case-sensitive
+			      C 
+			      C INCLUDE SmallWin.inc		; MS-Windows prototypes, structures, and constants
+			      C .NOLIST
+			      C .LIST
+			      C 
+			      C INCLUDE VirtualKeys.inc
+			      C ; VirtualKeys.inc
+			      C .NOLIST
+			      C .LIST
+			      C 
+			      C 
+			      C .NOLIST
+			      C .LIST
+			      C 
+
+ 00000000			.data
+ 00000000 F123				num1			WORD	0F123h
+ 00000002 E456				num2			WORD	0E456h
+
+ 00000004 45 6E 74 65 72		first_prompt	BYTE	"Enter a first hex number:",0
+	   20 61 20 66 69
+	   72 73 74 20 68
+	   65 78 20 6E 75
+	   6D 62 65 72 3A
+	   00
+ 0000001E 45 6E 74 65 72		second_prompt	BYTE	"Enter a second hex number:",0
+	   20 61 20 73 65
+	   63 6F 6E 64 20
+	   68 65 78 20 6E
+	   75 6D 62 65 72
+	   3A 00
+ 00000039 57 6F 75 6C 64		continue		BYTE	"Would you like to continue? (y): ", 0
+	   20 79 6F 75 20
+	   6C 69 6B 65 20
+	   74 6F 20 63 6F
+	   6E 74 69 6E 75
+	   65 3F 20 28 79
+	   29 3A 20 00
+ 0000005B 54 68 65 20 73		sum_prompt		BYTE	"The sum result is: ",0
+	   75 6D 20 72 65
+	   73 75 6C 74 20
+	   69 73 3A 20 00
+ 0000006F 00 00 00 00 00		result			BYTE	?,?,?,?,0
+ 00000074 49 6E 76 61 6C		invalid_result	BYTE	"Invalid result. [ Overflow detected. Result is greater than signed 16-bit]", 0
+	   69 64 20 72 65
+	   73 75 6C 74 2E
+	   20 5B 20 4F 76
+	   65 72 66 6C 6F
+	   77 20 64 65 74
+	   65 63 74 65 64
+	   2E 20 52 65 73
+	   75 6C 74 20 69
+	   73 20 67 72 65
+	   61 74 65 72 20
+	   74 68 61 6E 20
+	   73 69 67 6E 65
+	   64 20 31 36 2D
+	   62 69 74 5D 00
+ 000000BF 00000004 R			prompt			DWORD    OFFSET first_prompt, OFFSET second_prompt
+	   0000001E R
+ 00000000			.code
+
+ 00000000			main PROC
+
+ 00000000			mainLoop:
+				;GetInput Procedure -------------- Pass by Reference
+ 00000000  68 000000BF R		push	OFFSET prompt		; address of prompt
+ 00000005  68 00000000 R		push	OFFSET num1			; address of num1
+ 0000000A  68 00000002 R		push	OFFSET num2			; address of num2
+ 0000000F  E8 00000088			call	getInput
+
+				;Add Procedure ------------------- Pass by Value
+ 00000014  0F B7 05			movzx	eax, num1
+	   00000000 R
+ 0000001B  50				push	eax
+ 0000001C  0F B7 05			movzx	eax, num2
+	   00000002 R
+ 00000023  50				push	eax
+ 00000024  E8 000000AA			call	addInput	
+								
+ 00000029  F6 C1 01			test	cl, 1
+ 0000002C  75 26			jnz		InvalidResult
+
+ 0000002E			ValidResult:
+ 0000002E  50				push	eax						; pass the sum result to stack by value
+ 0000002F  68 0000006F R		push	OFFSET result			; pass by reference
+													; convert Procedure 
+ 00000034  E8 000000B8			call	convertHexString	
+
+ 00000039  BA 0000005B R		mov		edx, OFFSET sum_prompt	; Display the result
+ 0000003E  E8 00000000 E		call	writeString
+ 00000043  BA 0000006F R		mov		edx, OFFSET result
+ 00000048  E8 00000000 E		call	writeString
+
+ 0000004D  E8 00000000 E		call	crlf
+ 00000052  EB 0F			jmp		AskContinue
+
+ 00000054			InvalidResult:
+ 00000054  BA 00000074 R		mov		edx, OFFSET invalid_result
+ 00000059  E8 00000000 E		call	writeString
+ 0000005E  E8 00000000 E		call	crlf
+
+ 00000063			AskContinue:
+ 00000063  BA 00000039 R		mov		edx, OFFSET continue		
+ 00000068  E8 00000000 E		call	writeString
+ 0000006D  E8 00000000 E		call	readChar					
+ 00000072  E8 00000000 E		call	writeChar					; echo user input
+ 00000077  E8 00000000 E		call	crlf
+ 0000007C  E8 00000000 E		call	crlf
+ 00000081  B2 79			mov		dl, 'y'						;if (al == 'y') or (al == 'Y')
+ 00000083  3A C2			cmp		al, dl
+ 00000085  0F 84 FFFFFF75		je		mainLoop
+ 0000008B  B2 59			mov		dl,'Y'
+ 0000008D  3A C2			cmp		al, dl
+ 0000008F  0F 84 FFFFFF6B		je		mainLoop
+
+
+				exit
+ 00000095  6A 00	   *	    push   +000000000h
+ 00000097  E8 00000000 E   *	    call   ExitProcess
+ 0000009C			main ENDP
+
+
+				;------------GET INPUT PROCEDURE --------------------
+ 0000009C			getInput PROC
+				;	Get user input and store into data num1 and num2
+				;		Input: addr(inputstring), addr(num1), addr(num2)
+				;		Ouput: nothing
+				;----------------------------------------------------
+ 0000009C  55				push	ebp
+ 0000009D  8B EC			mov		ebp, esp
+ 0000009F  50				push	eax
+ 000000A0  53				push	ebx
+ 000000A1  51				push	ecx
+ 000000A2  52				push	edx
+
+ 000000A3  B9 00000000			mov		ecx, 0
+ 000000A8			DISPLAY:
+ 000000A8  83 F9 02			cmp		ecx, 2
+ 000000AB  74 1E			je		FINISHED
+
+ 000000AD  8B 45 10			mov		eax, [ebp+16]					; save address of inputstring to edx 
+ 000000B0  8D 04 88			lea		eax, [eax + ecx*4]				; dereference [edx]
+ 000000B3  8B 10			mov		edx, [eax]						
+ 000000B5  E8 00000000 E		call	writeString						
+ 000000BA  E8 00000000 E		call	readHex							; store hex input in AX
+															; There is no validation here since input is guranteed to be a hex value within 16 bits
+
+ 000000BF  8B 55 0C			mov		edx, [ebp+12]					; 
+ 000000C2  8D 14 4A			lea		edx, [edx + ecx*2]				; 
+ 000000C5  66| 89 02			mov		WORD PTR [edx], ax				; dereference [edx]
+
+ 000000C8  41				inc		ecx
+ 000000C9  EB DD			jmp		DISPLAY
+
+ 000000CB			FINISHED:
+ 000000CB  5A				pop		edx
+ 000000CC  59				pop		ecx
+ 000000CD  5B				pop		ebx
+ 000000CE  58				pop		eax
+ 000000CF  5D				pop		ebp
+ 000000D0  C2 000C			ret		12
+ 000000D3			getInput ENDP
+
+				;----------------------ADD PROCEDURE ----------------------------
+ 000000D3			addInput PROC
+				;	add two user input number
+				;		Input: value num1, value num2
+				;		Ouput: eax : sum value
+				;			   cx  : flag for calculation (1 means invalid sumation)
+				;-------------------------------------------------------------------
+ 000000D3  55				push	ebp
+ 000000D4  8B EC			mov		ebp, esp
+ 000000D6  53				push	ebx
+ 000000D7  52				push	edx
+
+ 000000D8  66| 8B 45 08			mov		ax, [ebp+8]
+ 000000DC  66| 8B 5D 0C			mov		bx, [ebp+12]
+ 000000E0  66| 03 C3			add		ax, bx
+ 000000E3  71 06			jno		finished
+ 000000E5			overFlowDetected:
+ 000000E5  66| B9 0000			mov		cx, 0
+ 000000E9  66| 41			inc		cx				; if ecx = 1 mean overflow is detected""
+ 000000EB			finished:
+ 000000EB  5A				pop		edx
+ 000000EC  5B				pop		ebx
+ 000000ED  5D				pop		ebp
+ 000000EE  C2 0008			ret		8
+ 000000F1			addInput ENDP
+
+
+				;----------------------CONVERT PROCEDURE -----------------
+ 000000F1			convertHexString PROC
+				;	convert a value to string
+				;		Input: a register
+				;		Ouput: string
+				;
+				;--------------------------------------------------------
+ 000000F1  55				push	ebp
+ 000000F2  8B EC			mov		ebp, esp
+ 000000F4  50				push	eax
+ 000000F5  53				push	ebx
+ 000000F6  51				push	ecx
+ 000000F7  52				push	edx
+ 000000F8  56				push	esi
+ 000000F9  B9 00000004			mov		ecx, 4								; counter for loop			
+ 000000FE  66| BB 0010			mov		bx, 16								; divisor for HEX
+
+ 00000102			convertHEXtoString: 
+ 00000102  66| BA 0000			mov		dx, 0					
+ 00000106  66| F7 FB			idiv	bx								; Get remainder to store.
+ 00000109  66| 83 FA 09			cmp		dx, 9							; Compare if output = a number or a letter (A..F)
+ 0000010D  77 05			ja		extractLetter					; IF-ELSE control flows
+
+ 0000010F			  extractNumber:
+ 0000010F  80 C2 30			add		dl, 48d
+ 00000112  EB 03			jmp		AddtoString
+
+ 00000114			  extractLetter:							; a sub-routine of Convert Hex to String
+ 00000114  80 C2 37			add		dl, 55d						; add 48 to convert dec to letter in ANSCII table
+							 
+ 00000117			  AddtoString:							; a sub-routine of Convert to Hex to String
+ 00000117  8B 75 08			mov		esi, [ebp + 8]
+ 0000011A  88 54 31 FF			mov		BYTE PTR[esi + ecx - 1], dl		; save a char (0..9 or A..F) into output array
+
+ 0000011E  E2 E2			loop convertHEXtoSTRING
+
+ 00000120			finished:
+ 00000120  5E				pop		esi
+ 00000121  5A				pop		edx
+ 00000122  59				pop		ecx
+ 00000123  5B				pop		ebx
+ 00000124  58				pop		eax
+ 00000125  5D				pop		ebp
+ 00000126  C2 0008			ret		8
+ 00000129			convertHexString ENDP
+
+
+				END main
+
+
+				COMMENT !
+				===========CONSOLE OUTPUT====================
+
+				Enter a first hex number:0000
+				Enter a second hex number:0000
+				The sum result is: 0000
+				Would you like to continue? (y): y
+
+				Enter a first hex number:7AAAA
+				Enter a second hex number:FFFF
+				The sum result is: AAA9
+				Would you like to continue? (y): y
+
+				Enter a first hex number:FFFF
+				Enter a second hex number:FFFF
+				The sum result is: FFFE
+				Would you like to continue? (y): y
+
+				Enter a first hex number:FFFF
+				Enter a second hex number:1
+				The sum result is: 0000
+				Would you like to continue? (y): n
+
+				!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+				; STACK FRAME of GetInput
+				;---------------------
+				; address of inputstring	-----[ebp + 16]
+				; address of n1				-----[ebp + 12]
+				; address of n2 			-----[ebp + 8]
+				; RET address				-----[ebp + 4]
+				; ebp						-----[ebp]
+				; value of eax				-----[ebp - 4]
+				; value of ebx				-----[ebp - 8]
+				; value of ecx				-----[ebp - 12]
+				; value of edx				-----[ebp - 16]  <------- ESP points here
+
+				; STACK FRAME of addInput
+				;---------------------
+				; value of n1				-----[ebp + 12]
+				; value of n2 				-----[ebp + 8]
+				; RET address				-----[ebp + 4]
+				; ebp						-----[ebp]
+				; value of eax				-----[ebp - 4]
+				; value of ebx				-----[ebp - 8]
+				; value of ecx				-----[ebp - 12]
+				; value of edx				-----[ebp - 16]  <------- ESP points here
+
+
+				; STACK FRAME of ConverHEXString
+				;---------------------
+				; address of output			-----[ebp + 12]
+				; value of Sum				-----[ebp + 8]
+				; RET address				-----[ebp + 4]
+				; ebp						-----[ebp]
+				; value of eax				-----[ebp - 4]
+				; value of ebx				-----[ebp - 8]
+				; value of ecx				-----[ebp - 12]
+				; value of edx				-----[ebp - 16]  <------- ESP points here
 
 				COMMENT !
 				1.	Define 2 WORD size variables called num1 and num2 in the .data section. These are the 2 signed hexadecimal numbers. 
@@ -44,131 +373,7 @@ Microsoft (R) Macro Assembler Version 14.00.23918.0	    11/22/16 13:29:58
 				-	Each procedure should have its own stack frame. And the stack frame should be cleared out completely when the procedure call is completed.
 				-	When ready to upload, make sure the filename is assignment7.asm
 				!
-
-
-				TITLE Module 7 Exercise
-
-				INCLUDE Irvine32.inc
-			      C ; Include file for Irvine32.lib             (Irvine32.inc)
-			      C 
-			      C ;OPTION CASEMAP:NONE		; optional: make identifiers case-sensitive
-			      C 
-			      C INCLUDE SmallWin.inc		; MS-Windows prototypes, structures, and constants
-			      C .NOLIST
-			      C .LIST
-			      C 
-			      C INCLUDE VirtualKeys.inc
-			      C ; VirtualKeys.inc
-			      C .NOLIST
-			      C .LIST
-			      C 
-			      C 
-			      C .NOLIST
-			      C .LIST
-			      C 
-
- 00000000			.data
-
- 00000000 F123				num1			WORD	0F123h
- 00000002 E456				num2			WORD	0E456h
-
- 00000004 45 6E 74 65 72		first_prompt	BYTE	"Enter a first hex number:",0
-	   20 61 20 66 69
-	   72 73 74 20 68
-	   65 78 20 6E 75
-	   6D 62 65 72 3A
-	   00
- 0000001E 45 6E 74 65 72		second_prompt	BYTE	"Enter a second hex number:",0
-	   20 61 20 73 65
-	   63 6F 6E 64 20
-	   68 65 78 20 6E
-	   75 6D 62 65 72
-	   3A 00
- 00000039 00000004 R			prompt			DWORD    OFFSET first_prompt, OFFSET second_prompt
-	   0000001E R
-
-
- 00000000			.code
- 00000000			main PROC
-
-				;Step 1 : Get user's input using Stack Frame
- 00000000  68 00000039 R		push	OFFSET prompt		; address of prompt
- 00000005  68 00000000 R		push	OFFSET num1			; address of num1
- 0000000A  68 00000002 R		push	OFFSET num2			; address of num2
- 0000000F  E8 00000007			call	getInput
-
-				exit
- 00000014  6A 00	   *	    push   +000000000h
- 00000016  E8 00000000 E   *	    call   ExitProcess
- 0000001B			main ENDP
-
-				;------------GET INPUT PROCEDURE --------------------
- 0000001B			getInput PROC
-				;	Get user input and store into data num1 and num2
-				;		Input: addr(inputstring), addr(num1), addr(num2)
-				;		Ouput: nothing
-				;----------------------------------------------------
- 0000001B  55				push	ebp
- 0000001C  8B EC			mov		ebp, esp
-																; Save register's data
-																;Aternative : pushad
- 0000001E  50				push	eax
- 0000001F  53				push	ebx
- 00000020  51				push	ecx
- 00000021  52				push	edx
-																; STACK FRAME in Memory
-																;---------------------
-																; address of inputstring	-----[ebp + 16]
-																; address of n1				-----[ebp + 12]
-																; address of n2 			-----[ebp + 8]
-																; RET address				-----[ebp + 4]
-																; ebp						-----[ebp]
-																; value of eax				-----[ebp - 4]
-																; value of ebx				-----[ebp - 8]
-																; value of ecx				-----[ebp - 12]
-																; value of edx				-----[ebp - 16]  <------- ESP points here
- 00000022  B9 00000000			mov		ecx, 0
- 00000027				DISPLAY:
- 00000027  83 F9 02				cmp		ecx, 2
- 0000002A  74 30				je		FINISHED
-
- 0000002C  8B 55 10				mov		edx, [ebp+16]					; save address of inputstring to edx 
- 0000002F  BB 00000004				mov		ebx, TYPE edx					; multiplier to iterate array of inputstring								
- 00000034  8B C1				mov		eax, ecx						; iterate through element of array of inputstring
- 00000036  F6 E3				mul		bl								; by multiplying bl*al
- 00000038  03 D0				add		edx, eax						; then, add the iteration to edx
-
- 0000003A  8B 12				mov		edx, [edx]						; dereference [edx]
- 0000003C  E8 00000000 E			call	writeString						
- 00000041  E8 00000000 E			call	readHex							; store hex input in AX
-																; There is no validation here since input is guranteed to be a hex value within 16 bits
-
- 00000046  8B 55 0C				mov		edx, [ebp+12]					; 
-						movzx	ebx, LENGTHOF [edx]
-Assignment7.asm(113) : error A2081:missing operand after unary operator
- 00000049  8D 14 4A				lea		edx, [edx+ecx*2]				; 
- 0000004C  89 02				mov		[edx], eax						; dereference [edx]
-
- 0000004E  41					inc		ecx
- 0000004F  EB D6				jmp		DISPLAY
- 0000005C				FINISHED:
- 0000005C  5A					pop		edx
- 0000005D  59					pop		ecx
- 0000005E  5B					pop		ebx
- 0000005F  58					pop		eax
- 00000060  5D					pop		ebp
- 00000061  C2 000C				ret		12
- 00000064			getInput ENDP
-
-				COMMENT !
-				2.	Write the getInput procedure.  This procedure:
-					a.	Prompts the user and reads in 2 hexadecimal values, and stores them in num1 and num2.
-					b.	Works with 3 parameters on the stack:  address of the input prompt string address, address of num1, address of num2.
-					c.	You don't have to check for invalid input values. The input is guaranteed to be a hex value within 16 bits.
-				!
-
-				END main
-Microsoft (R) Macro Assembler Version 14.00.23918.0	    11/22/16 13:29:58
+Microsoft (R) Macro Assembler Version 14.00.24210.0	    11/23/16 00:18:41
 Module 7 Exercis					     Symbols 2 - 1
 
 
@@ -262,8 +467,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 00000041 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000064 Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 000000C7 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000129 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -370,10 +575,23 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-getInput . . . . . . . . . . . .	P Near	 0000001B _TEXT	Length= 00000049 Public STDCALL
-  DISPLAY  . . . . . . . . . . .	L Near	 00000027 _TEXT	
-  FINISHED . . . . . . . . . . .	L Near	 0000005C _TEXT	
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000001B Public STDCALL
+addInput . . . . . . . . . . . .	P Near	 000000D3 _TEXT	Length= 0000001E Public STDCALL
+  overFlowDetected . . . . . . .	L Near	 000000E5 _TEXT	
+  finished . . . . . . . . . . .	L Near	 000000EB _TEXT	
+convertHexString . . . . . . . .	P Near	 000000F1 _TEXT	Length= 00000038 Public STDCALL
+  convertHEXtoString . . . . . .	L Near	 00000102 _TEXT	
+  extractNumber  . . . . . . . .	L Near	 0000010F _TEXT	
+  extractLetter  . . . . . . . .	L Near	 00000114 _TEXT	
+  AddtoString  . . . . . . . . .	L Near	 00000117 _TEXT	
+  finished . . . . . . . . . . .	L Near	 00000120 _TEXT	
+getInput . . . . . . . . . . . .	P Near	 0000009C _TEXT	Length= 00000037 Public STDCALL
+  DISPLAY  . . . . . . . . . . .	L Near	 000000A8 _TEXT	
+  FINISHED . . . . . . . . . . .	L Near	 000000CB _TEXT	
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000009C Public STDCALL
+  mainLoop . . . . . . . . . . .	L Near	 00000000 _TEXT	
+  ValidResult  . . . . . . . . .	L Near	 0000002E _TEXT	
+  InvalidResult  . . . . . . . .	L Near	 00000054 _TEXT	
+  AskContinue  . . . . . . . . .	L Near	 00000063 _TEXT	
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -595,11 +813,13 @@ WriteConsole . . . . . . . . . .	Text   	 WriteConsoleA
 black  . . . . . . . . . . . . .	Number	 00000000h   
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
+continue . . . . . . . . . . . .	Byte	 00000039 _DATA	
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
 first_prompt . . . . . . . . . .	Byte	 00000004 _DATA	
 gray . . . . . . . . . . . . . .	Number	 00000008h   
 green  . . . . . . . . . . . . .	Number	 00000002h   
+invalid_result . . . . . . . . .	Byte	 00000074 _DATA	
 lightBlue  . . . . . . . . . . .	Number	 00000009h   
 lightCyan  . . . . . . . . . . .	Number	 0000000Bh   
 lightGray  . . . . . . . . . . .	Number	 00000007h   
@@ -609,12 +829,14 @@ lightRed . . . . . . . . . . . .	Number	 0000000Ch
 magenta  . . . . . . . . . . . .	Number	 00000005h   
 num1 . . . . . . . . . . . . . .	Word	 00000000 _DATA	
 num2 . . . . . . . . . . . . . .	Word	 00000002 _DATA	
-prompt . . . . . . . . . . . . .	DWord	 00000039 _DATA	
+prompt . . . . . . . . . . . . .	DWord	 000000BF _DATA	
 red  . . . . . . . . . . . . . .	Number	 00000004h   
+result . . . . . . . . . . . . .	Byte	 0000006F _DATA	
 second_prompt  . . . . . . . . .	Byte	 0000001E _DATA	
+sum_prompt . . . . . . . . . . .	Byte	 0000005B _DATA	
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
 yellow . . . . . . . . . . . . .	Number	 0000000Eh   
 
 	   0 Warnings
-	   1 Errors
+	   0 Errors

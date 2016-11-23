@@ -5,41 +5,71 @@ INCLUDE Irvine32.inc
 .data
 	num1			WORD	0F123h
 	num2			WORD	0E456h
+
 	first_prompt	BYTE	"Enter a first hex number:",0
 	second_prompt	BYTE	"Enter a second hex number:",0
-	continue		BYTE	"Would you like to continue? (y/n): "
-	prompt			DWORD    OFFSET first_prompt, OFFSET second_prompt, OFFSET continue
+	continue		BYTE	"Would you like to continue? (y): ", 0
+	sum_prompt		BYTE	"The sum result is: ",0
+	result			BYTE	?,?,?,?,0
+	invalid_result	BYTE	"Invalid result. [ Overflow detected. Result is greater than signed 16-bit]", 0
+	prompt			DWORD    OFFSET first_prompt, OFFSET second_prompt
 .code
 
 main PROC
-								;GetInput Procedure
+
+mainLoop:
+;GetInput Procedure -------------- Pass by Reference
 	push	OFFSET prompt		; address of prompt
 	push	OFFSET num1			; address of num1
 	push	OFFSET num2			; address of num2
 	call	getInput
-								;Add Procedure
+
+;Add Procedure ------------------- Pass by Value
 	movzx	eax, num1
 	push	eax
 	movzx	eax, num2
 	push	eax
-	call	addInput
+	call	addInput	
 				
-	test	bl, 1
-	jz		InvalidResult
+	test	cl, 1
+	jnz		InvalidResult
 
-	ValidResult:
-								;convert Procedure
-	InvalidResult:
-								; print error and ask to continue
+ValidResult:
+	push	eax						; pass the sum result to stack by value
+	push	OFFSET result			; pass by reference
+									; convert Procedure 
+	call	convertHexString	
 
-	AskContinue:
+	mov		edx, OFFSET sum_prompt	; Display the result
+	call	writeString
+	mov		edx, OFFSET result
+	call	writeString
 
+	call	crlf
+	jmp		AskContinue
+
+InvalidResult:
+	mov		edx, OFFSET invalid_result
+	call	writeString
+	call	crlf
+
+AskContinue:
+	mov		edx, OFFSET continue		
+	call	writeString
+	call	readChar					
+	call	writeChar					; echo user input
+	call	crlf
+	call	crlf
+	mov		dl, 'y'						;if (al == 'y') or (al == 'Y')
+	cmp		al, dl
+	je		mainLoop
+	mov		dl,'Y'
+	cmp		al, dl
+	je		mainLoop
 
 
 exit
 main ENDP
-
-
 
 
 ;------------GET INPUT PROCEDURE --------------------
@@ -56,40 +86,40 @@ getInput PROC
 	push	edx
 
 	mov		ecx, 0
-	DISPLAY:
-		cmp		ecx, 2
-		je		FINISHED
+DISPLAY:
+	cmp		ecx, 2
+	je		FINISHED
 
-		mov		eax, [ebp+16]					; save address of inputstring to edx 
-		lea		eax, [eax + ecx*4]				; dereference [edx]
-		mov		edx, [eax]						
-		call	writeString						
-		call	readHex							; store hex input in AX
-												; There is no validation here since input is guranteed to be a hex value within 16 bits
+	mov		eax, [ebp+16]					; save address of inputstring to edx 
+	lea		eax, [eax + ecx*4]				; dereference [edx]
+	mov		edx, [eax]						
+	call	writeString						
+	call	readHex							; store hex input in AX
+											; There is no validation here since input is guranteed to be a hex value within 16 bits
 
-		mov		edx, [ebp+12]					; 
-		lea		edx, [edx + ecx*2]				; 
-		mov		WORD PTR [edx], ax				; dereference [edx]
+	mov		edx, [ebp+12]					; 
+	lea		edx, [edx + ecx*2]				; 
+	mov		WORD PTR [edx], ax				; dereference [edx]
 
-		inc		ecx
-		jmp		DISPLAY
+	inc		ecx
+	jmp		DISPLAY
 
-	FINISHED:
-		pop		edx
-		pop		ecx
-		pop		ebx
-		pop		eax
-		pop		ebp
-		ret		12
+FINISHED:
+	pop		edx
+	pop		ecx
+	pop		ebx
+	pop		eax
+	pop		ebp
+	ret		12
 getInput ENDP
 
-;----------------------ADD PROCEDURE --------------------
+;----------------------ADD PROCEDURE ----------------------------
 addInput PROC
 ;	add two user input number
-;		Input: value 1, value 2
-;		Ouput: sum stored in eax
-;			   flag stored in bl
-;--------------------------------------------------------
+;		Input: value num1, value num2
+;		Ouput: eax : sum value
+;			   cx  : flag for calculation (1 means invalid sumation)
+;-------------------------------------------------------------------
 	push	ebp
 	mov		ebp, esp
 	push	ebx
@@ -98,22 +128,20 @@ addInput PROC
 	mov		ax, [ebp+8]
 	mov		bx, [ebp+12]
 	add		ax, bx
-	jno		overFlowDetected
-	jmp		finished
-
-	overFlowDetected:
-		mov		cx, 0
-		inc		cx				; if ecx = 1 mean overflow is detected""
-	finished:
-		pop		edx
-		pop		ebx
-		pop		ebp
-		ret		8
+	jno		finished
+overFlowDetected:
+	mov		cx, 0
+	inc		cx				; if ecx = 1 mean overflow is detected""
+finished:
+	pop		edx
+	pop		ebx
+	pop		ebp
+	ret		8
 addInput ENDP
 
 
 ;----------------------CONVERT PROCEDURE -----------------
-coverHexString PROC
+convertHexString PROC
 ;	convert a value to string
 ;		Input: a register
 ;		Ouput: string
@@ -121,19 +149,91 @@ coverHexString PROC
 ;--------------------------------------------------------
 	push	ebp
 	mov		ebp, esp
+	push	eax
 	push	ebx
+	push	ecx
 	push	edx
+	push	esi
+	mov		ecx, 4								; counter for loop			
+	mov		bx, 16								; divisor for HEX
 
+convertHEXtoString: 
+	mov		dx, 0					
+	idiv	bx								; Get remainder to store.
+	cmp		dx, 9							; Compare if output = a number or a letter (A..F)
+	ja		extractLetter					; IF-ELSE control flows
 
-	; code goes here
+  extractNumber:
+	add		dl, 48d
+	jmp		AddtoString
 
-	finished:
+  extractLetter:							; a sub-routine of Convert Hex to String
+	add		dl, 55d						; add 48 to convert dec to letter in ANSCII table
+			 
+  AddtoString:							; a sub-routine of Convert to Hex to String
+	mov		esi, [ebp + 8]
+	mov		BYTE PTR[esi + ecx - 1], dl		; save a char (0..9 or A..F) into output array
+
+	loop convertHEXtoSTRING
+
+finished:
+	pop		esi
 	pop		edx
+	pop		ecx
 	pop		ebx
+	pop		eax
 	pop		ebp
-	ret		4
-coverHexString ENDP
+	ret		8
+convertHexString ENDP
+
+
 END main
+
+
+COMMENT !
+===========CONSOLE OUTPUT====================
+
+Enter a first hex number:0000
+Enter a second hex number:0000
+The sum result is: 0000
+Would you like to continue? (y): y
+
+Enter a first hex number:7AAAA
+Enter a second hex number:FFFF
+The sum result is: AAA9
+Would you like to continue? (y): y
+
+Enter a first hex number:FFFF
+Enter a second hex number:FFFF
+The sum result is: FFFE
+Would you like to continue? (y): y
+
+Enter a first hex number:FFFF
+Enter a second hex number:1
+The sum result is: 0000
+Would you like to continue? (y): n
+
+!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -160,6 +260,17 @@ END main
 ; value of ecx				-----[ebp - 12]
 ; value of edx				-----[ebp - 16]  <------- ESP points here
 
+
+; STACK FRAME of ConverHEXString
+;---------------------
+; address of output			-----[ebp + 12]
+; value of Sum				-----[ebp + 8]
+; RET address				-----[ebp + 4]
+; ebp						-----[ebp]
+; value of eax				-----[ebp - 4]
+; value of ebx				-----[ebp - 8]
+; value of ecx				-----[ebp - 12]
+; value of edx				-----[ebp - 16]  <------- ESP points here
 
 COMMENT !
 1.	Define 2 WORD size variables called num1 and num2 in the .data section. These are the 2 signed hexadecimal numbers. 
