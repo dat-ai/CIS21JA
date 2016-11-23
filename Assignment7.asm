@@ -1,3 +1,166 @@
+TITLE Module 7 Exercise
+
+INCLUDE Irvine32.inc
+
+.data
+	num1			WORD	0F123h
+	num2			WORD	0E456h
+	first_prompt	BYTE	"Enter a first hex number:",0
+	second_prompt	BYTE	"Enter a second hex number:",0
+	continue		BYTE	"Would you like to continue? (y/n): "
+	prompt			DWORD    OFFSET first_prompt, OFFSET second_prompt, OFFSET continue
+.code
+
+main PROC
+								;GetInput Procedure
+	push	OFFSET prompt		; address of prompt
+	push	OFFSET num1			; address of num1
+	push	OFFSET num2			; address of num2
+	call	getInput
+								;Add Procedure
+	movzx	eax, num1
+	push	eax
+	movzx	eax, num2
+	push	eax
+	call	addInput
+				
+	test	bl, 1
+	jz		InvalidResult
+
+	ValidResult:
+								;convert Procedure
+	InvalidResult:
+								; print error and ask to continue
+
+	AskContinue:
+
+
+
+exit
+main ENDP
+
+
+
+
+;------------GET INPUT PROCEDURE --------------------
+getInput PROC
+;	Get user input and store into data num1 and num2
+;		Input: addr(inputstring), addr(num1), addr(num2)
+;		Ouput: nothing
+;----------------------------------------------------
+	push	ebp
+	mov		ebp, esp
+	push	eax
+	push	ebx
+	push	ecx
+	push	edx
+
+	mov		ecx, 0
+	DISPLAY:
+		cmp		ecx, 2
+		je		FINISHED
+
+		mov		eax, [ebp+16]					; save address of inputstring to edx 
+		lea		eax, [eax + ecx*4]				; dereference [edx]
+		mov		edx, [eax]						
+		call	writeString						
+		call	readHex							; store hex input in AX
+												; There is no validation here since input is guranteed to be a hex value within 16 bits
+
+		mov		edx, [ebp+12]					; 
+		lea		edx, [edx + ecx*2]				; 
+		mov		WORD PTR [edx], ax				; dereference [edx]
+
+		inc		ecx
+		jmp		DISPLAY
+
+	FINISHED:
+		pop		edx
+		pop		ecx
+		pop		ebx
+		pop		eax
+		pop		ebp
+		ret		12
+getInput ENDP
+
+;----------------------ADD PROCEDURE --------------------
+addInput PROC
+;	add two user input number
+;		Input: value 1, value 2
+;		Ouput: sum stored in eax
+;			   flag stored in bl
+;--------------------------------------------------------
+	push	ebp
+	mov		ebp, esp
+	push	ebx
+	push	edx
+
+	mov		ax, [ebp+8]
+	mov		bx, [ebp+12]
+	add		ax, bx
+	jno		overFlowDetected
+	jmp		finished
+
+	overFlowDetected:
+		mov		cx, 0
+		inc		cx				; if ecx = 1 mean overflow is detected""
+	finished:
+		pop		edx
+		pop		ebx
+		pop		ebp
+		ret		8
+addInput ENDP
+
+
+;----------------------CONVERT PROCEDURE -----------------
+coverHexString PROC
+;	convert a value to string
+;		Input: a register
+;		Ouput: string
+;
+;--------------------------------------------------------
+	push	ebp
+	mov		ebp, esp
+	push	ebx
+	push	edx
+
+
+	; code goes here
+
+	finished:
+	pop		edx
+	pop		ebx
+	pop		ebp
+	ret		4
+coverHexString ENDP
+END main
+
+
+
+; STACK FRAME of GetInput
+;---------------------
+; address of inputstring	-----[ebp + 16]
+; address of n1				-----[ebp + 12]
+; address of n2 			-----[ebp + 8]
+; RET address				-----[ebp + 4]
+; ebp						-----[ebp]
+; value of eax				-----[ebp - 4]
+; value of ebx				-----[ebp - 8]
+; value of ecx				-----[ebp - 12]
+; value of edx				-----[ebp - 16]  <------- ESP points here
+
+; STACK FRAME of addInput
+;---------------------
+; value of n1				-----[ebp + 12]
+; value of n2 				-----[ebp + 8]
+; RET address				-----[ebp + 4]
+; ebp						-----[ebp]
+; value of eax				-----[ebp - 4]
+; value of ebx				-----[ebp - 8]
+; value of ecx				-----[ebp - 12]
+; value of edx				-----[ebp - 16]  <------- ESP points here
+
+
 COMMENT !
 1.	Define 2 WORD size variables called num1 and num2 in the .data section. These are the 2 signed hexadecimal numbers. 
 2.	Write the getInput procedure.  This procedure:
@@ -40,92 +203,3 @@ This includes names of strings that are printed.  All input data used by these p
 -	Each procedure should have its own stack frame. And the stack frame should be cleared out completely when the procedure call is completed.
 -	When ready to upload, make sure the filename is assignment7.asm
 !
-
-
-TITLE Module 7 Exercise
-
-INCLUDE Irvine32.inc
-
-.data
-
-	num1			WORD	0F123h
-	num2			WORD	0E456h
-
-	first_prompt	BYTE	"Enter a first hex number:",0
-	second_prompt	BYTE	"Enter a second hex number:",0
-	prompt			DWORD    OFFSET first_prompt, OFFSET second_prompt
-
-
-.code
-main PROC
-
-;Step 1 : Get user's input using Stack Frame
-	push	OFFSET prompt		; address of prompt
-	push	OFFSET num1			; address of num1
-	push	OFFSET num2			; address of num2
-	call	getInput
-
-exit
-main ENDP
-
-;------------GET INPUT PROCEDURE --------------------
-getInput PROC
-;	Get user input and store into data num1 and num2
-;		Input: addr(inputstring), addr(num1), addr(num2)
-;		Ouput: nothing
-;----------------------------------------------------
-	push	ebp
-	mov		ebp, esp
-												; Save register's data
-												;Aternative : pushad
-	push	eax
-	push	ebx
-	push	ecx
-	push	edx
-												; STACK FRAME in Memory
-												;---------------------
-												; address of inputstring	-----[ebp + 16]
-												; address of n1				-----[ebp + 12]
-												; address of n2 			-----[ebp + 8]
-												; RET address				-----[ebp + 4]
-												; ebp						-----[ebp]
-												; value of eax				-----[ebp - 4]
-												; value of ebx				-----[ebp - 8]
-												; value of ecx				-----[ebp - 12]
-												; value of edx				-----[ebp - 16]  <------- ESP points here
-	mov		ecx, 0
-	DISPLAY:
-		cmp		ecx, 2
-		je		FINISHED
-
-		mov		eax, [ebp+16]					; save address of inputstring to edx 
-		lea		eax, [eax + ecx*4]				; dereference [edx]
-		mov		edx, [eax]						
-		call	writeString						
-		call	readHex							; store hex input in AX
-												; There is no validation here since input is guranteed to be a hex value within 16 bits
-
-		mov		edx, [ebp+12]					; 
-		lea		edx, [edx + ecx*2]				; 
-		mov		WORD PTR [edx], ax				; dereference [edx]
-
-		inc		ecx
-		jmp		DISPLAY
-
-	FINISHED:
-		pop		edx
-		pop		ecx
-		pop		ebx
-		pop		eax
-		pop		ebp
-		ret		12
-getInput ENDP
-
-COMMENT !
-2.	Write the getInput procedure.  This procedure:
-	a.	Prompts the user and reads in 2 hexadecimal values, and stores them in num1 and num2.
-	b.	Works with 3 parameters on the stack:  address of the input prompt string address, address of num1, address of num2.
-	c.	You don't have to check for invalid input values. The input is guaranteed to be a hex value within 16 bits.
-!
-
-END main
